@@ -1,0 +1,75 @@
+version: "3.9"
+services:
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
+    ports:
+      - "8001:80"
+    networks:
+      - "web.network"
+  mongo:
+    image: "mongo:latest"
+    container_name: "mongo"
+    ports:
+      - "27017:27017"
+    networks:
+      - "web.network"
+    volumes:
+      - mongodata:/data/db
+      - mongodb_config:/data/configdb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+  db:
+    image: postgres:13
+    container_name: db
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST}
+    networks:
+      - "web.network"
+    volumes:
+      - postgres_data:/var/lib/postgresql/devsoc23
+  redis:
+    container_name: "redis"
+    image: redis:alpine
+    ports: 
+      - "6379:6399"
+    networks:
+      - "web.network"
+    volumes:
+      - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+  web:
+    build: .
+    ports:
+      - "8000"
+    volumes:
+      - ".:/app"
+    restart: "always"
+    environment:
+      - Replica= {{.Task.Name}}
+    depends_on:
+      - db
+      - mongo
+    networks:
+      - "web.network"
+    links:
+      - "db:database"
+    deploy:
+      replicas: 1
+networks:
+  web.network:
+volumes:
+  postgres_data:
+  mongodata:
+  mongodb_config:
+
