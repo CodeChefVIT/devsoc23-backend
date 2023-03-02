@@ -14,7 +14,7 @@ type User struct {
 	Password     *string            `json:"password" validate:"required,min=8,max=64"`
 	PhoneNumber  *string            `json:"phoneNumber" validate:"required,e164,min=10,max=13"`
 	Token        *string            `json:"token,omitempty"`
-	UserRole     *string            `json:"userRole" default:"USER" validate:"eq=ADMIN|eq=HACKER|eq=VOTER"`
+	UserRole     string             `json:"userRole" default:"HACKER" validate:"eq=ADMIN|eq=HACKER|eq=VOTER"`
 	ProfilePhoto *string            `json:"profilePhoto,omitempty"`
 	College      *string            `json:"college,omitempty" validate:"min=10,max=128"`
 	CollegeYear  *string            `json:"collegeYear,omitempty"`
@@ -27,7 +27,7 @@ type User struct {
 	IsCanShare   bool               `json:"isCanShare,omitempty"`
 	IsCheckedIn  bool               `json:"isCheckedIn,omitempty"`
 	InTeam       bool               `json:"inTeam,omitempty"`
-	IsBoard      bool               `json:"isBoard,omitempty" default:"USER"`
+	IsBoard      bool               `json:"isBoard,omitempty" default:"false"`
 	CreatedAt    time.Time          `json:"createdTime"`
 	UpdatedAt    time.Time          `json:"updatedTime"`
 	TeamId       *string            `json:"teamId,omitempty"`
@@ -35,16 +35,22 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Name      *string   `json:"name" bson:"name" binding:"required"`
-	Email     *string   `json:"email" validate:"required,email"`
-	CreatedAt time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
-}
-
-type NewUser struct {
-	Id        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-	Name      *string            `json:"name" bson:"name" binding:"required"`
-	Email     *string            `json:"email" validate:"required,email"`
-	CreatedAt time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
-	UpdatedAt time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+	Id          primitive.ObjectID `bson:"_id"`
+	FirstName   *string            `json:"firstName" validate:"required,min=2,max=16"`
+	LastName    *string            `json:"lastName" validate:"min=2,max=32"`
+	Email       *string            `json:"email" validate:"required,email"`
+	Password    *string            `json:"password" validate:"required,min=8,max=64"`
+	PhoneNumber *string            `json:"phoneNumber" validate:"required,e164,min=10,max=13"`
+	College     *string            `json:"college,omitempty" validate:"min=10,max=128"`
+	CollegeYear *string            `json:"collegeYear,omitempty"`
+	BirthDate   *string            `json:"birthDate,omitempty"`
+	IsActive    bool               `json:"isActive,omitempty"`
+	IsVerify    bool               `json:"isVerify,omitempty"`
+	IsCanShare  bool               `json:"isCanShare,omitempty"`
+	IsCheckedIn bool               `json:"isCheckedIn,omitempty"`
+	InTeam      bool               `json:"inTeam,omitempty"`
+	IsBoard     bool               `json:"isBoard,omitempty" default:"USER"`
+	CreatedAt   time.Time          `json:"createdTime"`
+	UpdatedAt   time.Time          `json:"updatedTime"`
+	UserId      string             `json:"userId"`
 }

@@ -13,6 +13,7 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	// incomingRoutes.GET("/users/:user_id", controller.GetUser())
 	// incomingRoutes.POST("/users/login", controller.Login())
 	incomingRoutes.Post("/users/signup", h.RegisterUser)
-	protected := incomingRoutes.Group("/users", middleware.VerifyToken)
-	protected.Get("/me",h.FindUser)
+	incomingRoutes.Get("/users", h.GetUsers)
+	userGroup := incomingRoutes.Group("/users", middleware.VerifyToken)
+	userGroup.Get("/me",h.FindUser)
 }

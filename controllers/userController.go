@@ -6,15 +6,26 @@ import (
 	"devsoc23-backend/models"
 	"devsoc23-backend/utils"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
-func init(){
-	helper.LoadEnv()
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
 }
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
 // func GetUsers() gin.HandlerFunc {
 // 	return func(c *gin.Context) {
 // 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
@@ -78,14 +89,41 @@ func init(){
 // 	Token string `json:"token"`
 // }
 
-// type UserSession struct {
-// 	UserID        int
-// 	Authenticated bool
-// }
+//	type UserSession struct {
+//		UserID        int
+//		Authenticated bool
+//	}
+
+func (databaseClient Database) GetUsers(ctx *fiber.Ctx) error {
+	var userCollection = databaseClient.MongoClient.Database("devsoc").Collection("users")
+	var users []models.User
+	cur, err := userCollection.Find(context.TODO(), bson.M{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cur.Close(context.Background())
+	for cur.Next(context.Background()) {
+		// To decode into a struct, use cursor.Decode()
+
+		var user models.User
+		err := cur.Decode(&user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		users = append(users, user)
+
+	}
+	if err := cur.Err(); err != nil {
+		return err
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "users": users})
+}
 
 func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	//Incomplete logic
 	var payload *models.CreateUserRequest
+
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
@@ -97,13 +135,31 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	}
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
-	now := time.Now()
 
-	newUser := models.NewUser{
-		Name:      payload.Name,
-		Email:     payload.Email,
-		CreatedAt: now,
-		UpdatedAt: now,
+	now := time.Now()
+	userRole := "HACKER"
+	hash, _ := HashPassword(*payload.Password)
+
+	newUser := models.User{
+		Id:          primitive.NewObjectID(),
+		FirstName:   payload.FirstName,
+		LastName:    payload.LastName,
+		Email:       payload.Email,
+		Password:    &hash,
+		PhoneNumber: payload.PhoneNumber,
+		UserRole:    userRole,
+		College:     payload.College,
+		CollegeYear: payload.CollegeYear,
+		BirthDate:   payload.BirthDate,
+		IsActive:    false,
+		IsVerify:    false,
+		IsCanShare:  false,
+		IsCheckedIn: false,
+		InTeam:      false,
+		IsBoard:     false,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		UserId:      helper.GenerateToken(),
 	}
 
 	result, err := userCollection.InsertOne(context.TODO(), newUser)
@@ -131,7 +187,7 @@ func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
 	}
 
-	findUser := models.NewUser{}
+	findUser := models.User{}
 	filter := bson.D{{"email", email}}
 
 	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)

@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"devsoc23-backend/database"
-	"devsoc23-backend/helper"
 	"devsoc23-backend/models"
 	"devsoc23-backend/utils"
 	"os"
@@ -12,10 +11,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
-
-func init() {
-	helper.LoadEnv()
-}
 
 func VerifyToken(ctx *fiber.Ctx) error {
 
@@ -38,7 +33,7 @@ func VerifyToken(ctx *fiber.Ctx) error {
 	}
 	filter := bson.D{{"email", sub}}
 
-	user := models.NewUser{}
+	user := models.User{}
 	userCollection := database.NewDatabase().MongoClient.Database("devsoc").Collection("users")
 
 	err = userCollection.FindOne(context.TODO(), filter).Decode(&user)
