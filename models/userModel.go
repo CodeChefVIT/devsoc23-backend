@@ -1,8 +1,9 @@
 package models
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type User struct {
@@ -31,4 +32,19 @@ type User struct {
 	UpdatedAt    time.Time          `json:"updatedTime"`
 	TeamId       *string            `json:"teamId,omitempty"`
 	UserId       string             `json:"userId"`
+}
+
+type CreateUserRequest struct {
+	Name      *string   `json:"name" bson:"name" binding:"required"`
+	Email     *string   `json:"email" validate:"required,email"`
+	CreatedAt time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+}
+
+type NewUser struct {
+	Id        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Name      *string            `json:"name" bson:"name" binding:"required"`
+	Email     *string            `json:"email" validate:"required,email"`
+	CreatedAt time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }
