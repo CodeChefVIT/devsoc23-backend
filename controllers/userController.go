@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"devsoc23-backend/helper"
 	"devsoc23-backend/models"
 	"devsoc23-backend/utils"
 	"fmt"
@@ -9,8 +10,11 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
 )
-
+func init(){
+	helper.LoadEnv()
+}
 // func GetUsers() gin.HandlerFunc {
 // 	return func(c *gin.Context) {
 // 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
@@ -116,6 +120,28 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "id": result.InsertedID, "token": token})
+}
+
+func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
+
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	email := ctx.GetRespHeader("currentUser")
+
+	if email == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
+	}
+
+	findUser := models.NewUser{}
+	filter := bson.D{{"email", email}}
+
+	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+	fmt.Println(findUser.Id)
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser})
 }
 
 // type loginUserRequest struct {
