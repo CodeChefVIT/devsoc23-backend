@@ -23,7 +23,7 @@ func main() {
 			"message": "pong",
 		})
 	})
-	routes.UserRoutes(app, &handler)
+	routes.AuthRoutes(app, &handler)
 	err := app.Listen(":8000")
 	if err != nil {
 		panic(err)

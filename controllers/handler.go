@@ -7,7 +7,6 @@ import (
 )
 
 type Database struct {
-	// DB          *gorm.DB
 	MongoClient *mongo.Client
 	RedisClient *redis.Client
 }
