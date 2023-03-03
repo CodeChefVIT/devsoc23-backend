@@ -121,7 +121,7 @@ func (databaseClient Database) GetUsers(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
-	//Incomplete logic
+	//Incomplete logic : check for unique user
 	var payload *models.CreateUserRequest
 
 	if err := ctx.BodyParser(&payload); err != nil {
@@ -170,12 +170,18 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	fmt.Println(result.InsertedID)
 
 	duration, _ := time.ParseDuration("1h")
-	token, err := utils.GenerateToken(duration, newUser.Email, os.Getenv("JWT_SECRET"))
+	token, err := utils.GenerateToken(duration, newUser.Email, os.Getenv("REFRESH_JWT_SECRET"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "id": result.InsertedID, "token": token})
+	// Update refreshToken in user document
+	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"email": newUser.Email}, bson.M{"$set": bson.M{"token": token}})
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": result})
 }
 
 func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
@@ -188,7 +194,7 @@ func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 	}
 
 	findUser := models.User{}
-	filter := bson.D{{"email", email}}
+	filter := bson.M{"email": email}
 
 	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
 
@@ -198,6 +204,91 @@ func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 	fmt.Println(findUser.Id)
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser})
+}
+
+func (databaseClient Database) RefreshToken(ctx *fiber.Ctx) error {
+
+	type tokenRequest struct {
+		RefreshToken string `json:"refreshToken"`
+	}
+
+	payload := tokenRequest{}
+	// Get refreshToken from request
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
+	}
+
+	// Find refresh token in db
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	filter := bson.M{"token": payload.RefreshToken}
+
+	count, err := userCollection.CountDocuments(context.TODO(), filter)
+	if count == 0 || err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "refreshToken not found"})
+	}
+
+	// Validate Refresh Token
+	sub, err := utils.ValidateToken(payload.RefreshToken, os.Getenv("REFRESH_JWT_SECRET"))
+	if err != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "err": err.Error(), "token": payload.RefreshToken})
+	}
+
+	// Create new accessToken
+	duration, _ := time.ParseDuration("1h")
+	accessToken, err := utils.GenerateToken(duration, sub, os.Getenv("JWT_SECRET"))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "accessToken": accessToken})
+}
+
+func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
+
+	// Get request body and bind to payload
+	var payload *models.LoginUserRequest
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
+	}
+
+	// Validate Struct
+	errors := utils.ValidateStruct(payload)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	// Find user in collection
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	findUser := models.User{}
+	filter := bson.M{"email": payload.Email}
+
+	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+	
+	// Compare password hashes
+	match := CheckPasswordHash(*payload.Password, *findUser.Password)
+
+	if !match {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Wrong password"})
+	}
+
+	// Create a new refreshToken
+	duration, _ := time.ParseDuration("1h")
+	token, err := utils.GenerateToken(duration, findUser.Email, os.Getenv("REFRESH_JWT_SECRET"))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+	}
+
+	// Update refreshToken in user document
+	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"email": findUser.Email}, bson.M{"$set": bson.M{"token": token}})
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser, "token": token})
 }
 
 // type loginUserRequest struct {
