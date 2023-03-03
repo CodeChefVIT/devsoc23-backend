@@ -4,7 +4,6 @@ import (
 	"context"
 	controller "devsoc23-backend/controllers"
 	"os"
-
 	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -13,7 +12,7 @@ import (
 
 
 func NewDatabase() controller.Database {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin:1234@cluster0.wbzzbj1.mongodb.net/test"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		panic(err.Error())
 	}

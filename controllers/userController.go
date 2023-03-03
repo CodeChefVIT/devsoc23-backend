@@ -1,31 +1,20 @@
 package controller
 
 import (
-	// "context"
-	// "fmt"
-
 	"context"
-	// "fmt"
+	"fmt"
 	"os"
 	"time"
-
-	// "strconv"
 
 	helper "devsoc23-backend/helper"
 	models "devsoc23-backend/models"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/go-playground/validator/v10"
-
-	// "golang.org/x/crypto/bcrypt"
-	// "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	// "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // func GetUsers() gin.HandlerFunc {
@@ -67,12 +56,10 @@ import (
 //		}
 //	}
 func (databaseClient Database) GetUser(ctx *fiber.Ctx) error {
-
-	// userCollection := databaseClient.MongoClient.Database("devsoc23").Collection("user")
-	var userCollection *mongo.Collection = databaseClient.MongoClient.Database("devsoc23").Collection("user")
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 	userId := ctx.Query("userId")
 	var user models.User
-	err := userCollection.FindOne(context.Background(), bson.M{"userid": userId}).Decode(&user)
+	err := userCollection.FindOne(context.TODO(), bson.M{"userid": userId}).Decode(&user)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -100,7 +87,7 @@ func ValidateStruct(user models.RegistrationUserRequest) []*models.ErrorResponse
 
 func (databaseClient Database) Singup(ctx *fiber.Ctx) error {
 
-	userCollection := databaseClient.MongoClient.Database("devsoc23").Collection("user")
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
 	var input models.RegistrationUserRequest
 	if err := ctx.BodyParser(&input); err != nil {
@@ -166,21 +153,23 @@ func (databaseClient Database) Singup(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) Login(ctx *fiber.Ctx) error {
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	// var userCollection *mongo.Collection
 	var user models.User
 	var input models.LoginUserRequest
-
-	userCollection := databaseClient.MongoClient.Database("devsoc23").Collection("user")
 
 	if err := ctx.BodyParser(&input); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
+	fmt.Print(*input.Email)
+	filter := bson.D{{"email", *input.Email}}
 
-	err := userCollection.FindOne(context.Background(), bson.M{"email": *input.Email}).Decode(&input)
-	if err != nil {
+	errr := userCollection.FindOne(context.TODO(), filter).Decode(input)
+	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "User not found",
+			"error": "User not found email",
 		})
 	}
 
