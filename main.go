@@ -16,14 +16,12 @@ func main() {
 	app.Use(logger.New())
 	helper.LoadEnv()
 	handler := database.NewDatabase()
-	//s3Client := infrastructure.InitializeSpaces()
-	database.CreateAutoMigration(&handler)
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "pong",
 		})
 	})
-	routes.UserRoutes(app, &handler)
+	routes.AuthRoutes(app, &handler)
 	err := app.Listen(":8000")
 	if err != nil {
 		panic(err)

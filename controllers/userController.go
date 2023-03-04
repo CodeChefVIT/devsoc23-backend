@@ -2,13 +2,19 @@ package controller
 
 import (
 	"context"
-	"devsoc23-backend/models"
-	"devsoc23-backend/utils"
 	"fmt"
 	"os"
 	"time"
 
+	helper "devsoc23-backend/helper"
+	models "devsoc23-backend/models"
+
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // func GetUsers() gin.HandlerFunc {
@@ -47,152 +53,139 @@ import (
 // 		}
 // 		c.JSON(http.StatusOK, allUsers)
 
-// 	}
-// }
-// func GetUser() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-// 		userId := c.Param("user_id")
-// 		var user models.User
-// 		err := userCollection.FindOne(ctx, bson.M{"user_id": userId}).Decode(&user)
-// 		defer cancel()
-// 		if err != nil {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while listing user"})
-
-// 		}
-// 		c.JSON(http.StatusOK, user)
-// 	}
-// }
-
-// type registrationUserRequest struct {
-// 	Email     string `json:"email" binding:"required"`
-// 	Password  string `json:"password" binding:"required"`
-// 	FirstName string `json:"first_name" binding:"required"`
-// 	LastName  string `json:"last_name" binding:"required"`
-// }
-// type registrationResponse struct {
-// 	Token string `json:"token"`
-// }
-
-// type UserSession struct {
-// 	UserID        int
-// 	Authenticated bool
-// }
-
-func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
-	//Incomplete logic
-	var payload *models.CreateUserRequest
-	if err := ctx.BodyParser(&payload); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
-	}
-
-	errors := utils.ValidateStruct(payload)
-	if errors != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
-
-	}
-
+//		}
+//	}
+func (databaseClient Database) GetUser(ctx *fiber.Ctx) error {
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
-	now := time.Now()
-
-	newUser := models.NewUser{
-		Name:      payload.Name,
-		Email:     payload.Email,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	result, err := userCollection.InsertOne(context.TODO(), newUser)
-
+	userId := ctx.Query("userId")
+	var user models.User
+	err := userCollection.FindOne(context.TODO(), bson.M{"userid": userId}).Decode(&user)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
-	fmt.Println(result.InsertedID)
-
-	duration, _ := time.ParseDuration("1h")
-	token, err := utils.GenerateToken(duration, newUser.Email, os.Getenv("JWT_SECRET"))
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "id": result.InsertedID, "token": token})
+	return ctx.Status(fiber.StatusOK).JSON(user)
 }
 
-// type loginUserRequest struct {
-// 	Email    string `json:"email" binding:"required"`
-// 	Password string `json:"password" binding:"required"`
-// }
-// type loginResponse struct {
-// 	Token string `json:"token"`
-// }
+var validate = validator.New()
 
-// func (databaseClient Database) Login(ctx *fiber.Ctx) error {
-// 	var input loginUserRequest
-// 	if err := ctx.BodyParser(&input); err != nil {
+func ValidateStruct(user models.RegistrationUserRequest) []*models.ErrorResponse {
+	var errors []*models.ErrorResponse
+	err := validate.Struct(user)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element models.ErrorResponse
+			element.FailedField = err.StructNamespace()
+			element.Tag = err.Tag()
+			element.Value = err.Param()
+			errors = append(errors, &element)
+		}
+	}
+	return errors
+}
 
-// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": err.Error(),
-// 		})
-// 	}
+func (databaseClient Database) Singup(ctx *fiber.Ctx) error {
 
-// 	var user models.User = models.User{EmailID: input.Email}
-// 	r := databaseClient.DB.Where("email_id = ?", input.Email).Limit(1).Find(&user)
-// 	exists := r.RowsAffected == 0
-// 	if exists {
-// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "User does not exist",
-// 		})
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
-// 	}
+	var input models.RegistrationUserRequest
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
 
-// 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
-// 	if err != nil {
-// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "Password did not matched",
-// 		})
+	err := ValidateStruct(input)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(err)
+	}
 
-// 	}
-// 	sessionID, err := databaseClient.RedisClient.Get(databaseClient.RedisClient.Context(), strconv.FormatUint(uint64(user.ID), 10)).Result()
-// 	if err == redis.Nil {
-// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error": "UserID does not exist",
-// 		})
+	count, errr := userCollection.CountDocuments(context.Background(), bson.M{"email": input.Email})
+	if errr != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": errr.Error(),
+		})
+	}
 
-// 	}
-// 	// logout condition
-// 	if sessionID == "" {
-// 		sessionID = helper.GenerateToken()
-// 		err = databaseClient.RedisClient.Set(databaseClient.RedisClient.Context(), sessionID, user.ID, redis.KeepTTL).Err()
-// 		if err != nil {
-// 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 				"error": "unable to add user session to redis",
-// 			})
+	if count > 0 {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "email is already taken",
+		})
+	}
 
-// 		}
-// 		err = databaseClient.RedisClient.Set(databaseClient.RedisClient.Context(), strconv.FormatUint(uint64(user.ID), 10), sessionID, redis.KeepTTL).Err()
-// 		if err != nil {
-// 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-// 				"error": "unable to add user session to redis",
-// 			})
+	hash := helper.HashPassword(*input.Password)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Something Went Wrong User not created",
+		})
+	}
 
-// 		}
-// 	}
-// 	claims := jwt.MapClaims{
-// 		"sessionID": sessionID,
-// 	}
-// 	// Create token
-// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	role := "HACKER"
 
-// 	// Generate encoded token and send it as response.
-// 	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-// 	if err != nil {
-// 		ctx.SendStatus(fiber.StatusInternalServerError)
+	user := models.User{Email: input.Email, Password: &hash, FirstName: input.FirstName, LastName: input.LastName, PhoneNumber: input.PhoneNumber, IsActive: true, IsVerify: false, IsBoard: false, IsCanShare: false, IsCheckedIn: false, InTeam: false}
+	user.Id = primitive.NewObjectID()
+	user.UserId = user.Id.Hex()
+	user.UserRole = &role
+	user.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	user.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	RegistrationResponse, errr := userCollection.InsertOne(context.Background(), user)
+	if errr != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Something Went Wrong User not created",
+		})
+	}
+	sessionID := helper.GenerateToken()
 
-// 	}
+	claims := jwt.MapClaims{
+		"sessionID": sessionID,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, errr := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if errr != nil {
+		ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"id":    RegistrationResponse.InsertedID,
+		"token": t,
+	})
 
-// 	return ctx.Status(fiber.StatusOK).JSON(loginResponse{Token: t})
+}
 
-// }
+func (databaseClient Database) Login(ctx *fiber.Ctx) error {
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	// var userCollection *mongo.Collection
+	var user models.User
+	var input models.LoginUserRequest
+
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	fmt.Print(*input.Email)
+	filter := bson.D{{"email", *input.Email}}
+
+	errr := userCollection.FindOne(context.TODO(), filter).Decode(input)
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "User not found email",
+		})
+	}
+
+	pssderr := bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(*input.Password))
+	if pssderr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Password did not matched",
+		})
+
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"sucess": "logged in succesffuly",
+	})
+}
+
 // func (databaseClient Database) Logout(ctx *fiber.Ctx) error {
 // 	user := ctx.Locals("user").(*jwt.Token)
 // 	claims := user.Claims.(jwt.MapClaims)
@@ -223,23 +216,4 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 // 		"message": "logged out",
 // 	})
 
-// }
-
-// func HashPassword(password string) string {
-// 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-// 	if err != nil {
-// 		log.Panic(err)
-// 	}
-// 	return string(bytes)
-// }
-// func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
-// 	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
-// 	check := true
-// 	msg := ""
-// 	if err != nil {
-// 		msg = fmt.Sprintf("login or password is incorrect")
-// 		check = false
-
-// 	}
-// 	return check, msg
 // }
