@@ -24,6 +24,7 @@ func main() {
 		})
 	})
 	routes.UserRoutes(app, &handler)
+	routes.TeamRoutes(app, &handler)
 	err := app.Listen(":8000")
 	if err != nil {
 		panic(err)

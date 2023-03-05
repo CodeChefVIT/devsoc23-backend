@@ -131,7 +131,6 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	errors := utils.ValidateStruct(payload)
 	if errors != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
-
 	}
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
@@ -267,7 +266,7 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
 	}
-	
+
 	// Compare password hashes
 	match := CheckPasswordHash(*payload.Password, *findUser.Password)
 
