@@ -17,4 +17,7 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	incomingRoutes.Post("/users/refresh", h.RefreshToken)
 	userGroup := incomingRoutes.Group("/users", middleware.VerifyToken)
 	userGroup.Get("/me", h.FindUser)
+
+	incomingRoutes.Get("/users/sendotp", controller.Sendotp)
+	incomingRoutes.Get("/users/verifyotp", controller.Verifyotp)
 }

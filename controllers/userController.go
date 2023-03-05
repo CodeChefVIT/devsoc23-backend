@@ -7,14 +7,27 @@ import (
 	"devsoc23-backend/utils"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"time"
 
+	"github.com/go-gomail/gomail"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var store = make(map[string]string)
+
+type EmailData struct {
+	Email string `json:"email"`
+}
+
+type EmailOTPData struct {
+	Email string `json:"email"`
+	OTP   string `json:"otp"`
+}
 
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
@@ -288,6 +301,81 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser, "token": token})
+}
+
+func Sendotp(c *fiber.Ctx) error {
+	// Get email from request body
+	var emailData EmailData
+	if err := c.BodyParser(&emailData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request",
+		})
+	}
+	email := emailData.Email
+	// Generate OTP
+	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+	// Store OTP
+	store[email] = otp
+
+	// Send email with OTP
+	m := gomail.NewMessage()
+	m.SetHeader("From", "noreplydevsoc23test@gmail.com")
+	m.SetHeader("To", email)
+	m.SetHeader("Subject", "Your OTP for Devsoc verification")
+	m.SetBody("text/plain", "Your Devsoc verification OTP is: "+otp)
+
+	d := gomail.NewDialer("smtp.gmail.com", 587, "noreplydevsoc23test@gmail.com", "hiwjgrwdrjtlcfzg")
+
+	// Send the email
+	if err := d.DialAndSend(m); err != nil {
+		// Return error if email cannot be sent
+		fmt.Println("Error reason: ", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to send OTP",
+		})
+	}
+	// Return success message
+	return c.JSON(fiber.Map{
+		"message": "OTP sent successfully",
+	})
+
+}
+
+func Verifyotp(c *fiber.Ctx) error {
+	// Get email and OTP from request body
+	var emailotpData EmailOTPData
+	if err := c.BodyParser(&emailotpData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request",
+		})
+	}
+	email := emailotpData.Email
+	otp := emailotpData.OTP
+	// Retrieve OTP from store
+	storedOtp, ok := store[email]
+	if !ok {
+		// Return error if OTP not found for email
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "OTP not found",
+		})
+	}
+
+	// Compare OTP
+	if otp != storedOtp {
+		// Return error if OTP is incorrect
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Incorrect OTP",
+		})
+	}
+
+	// Delete OTP from store
+	delete(store, email)
+
+	// Return success message
+	return c.JSON(fiber.Map{
+		"message": "OTP verified successfully",
+	})
 }
 
 // type loginUserRequest struct {
