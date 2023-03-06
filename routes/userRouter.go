@@ -19,5 +19,5 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	userGroup.Get("/me", h.FindUser)
 
 	incomingRoutes.Get("/users/sendotp", h.Sendotp)
-	incomingRoutes.Get("/users/verifyotp", h.Verifyotp)
+	incomingRoutes.Patch("/users/verifyotp", h.Verifyotp)
 }
