@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-gomail/gomail"
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -303,7 +304,7 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser, "token": token})
 }
 
-func Sendotp(c *fiber.Ctx) error {
+func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	// Get email from request body
 	var emailData EmailData
 	if err := c.BodyParser(&emailData); err != nil {
@@ -325,7 +326,13 @@ func Sendotp(c *fiber.Ctx) error {
 	m.SetHeader("Subject", "Your OTP for Devsoc verification")
 	m.SetBody("text/plain", "Your Devsoc verification OTP is: "+otp)
 
-	d := gomail.NewDialer("smtp.gmail.com", 587, "noreplydevsoc23test@gmail.com", "hiwjgrwdrjtlcfzg")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	from_emailid := os.Getenv("TEST_EMAILID")
+	app_pass := os.Getenv(" TEST_EMAILID_PASS")
+	d := gomail.NewDialer("smtp.gmail.com", 587, from_emailid, app_pass)
 
 	// Send the email
 	if err := d.DialAndSend(m); err != nil {
@@ -342,7 +349,7 @@ func Sendotp(c *fiber.Ctx) error {
 
 }
 
-func Verifyotp(c *fiber.Ctx) error {
+func (databaseClient Database) Verifyotp(c *fiber.Ctx) error {
 	// Get email and OTP from request body
 	var emailotpData EmailOTPData
 	if err := c.BodyParser(&emailotpData); err != nil {
@@ -373,6 +380,23 @@ func Verifyotp(c *fiber.Ctx) error {
 	delete(store, email)
 
 	// Return success message
+	collection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	// Create a filter to find the user with the given email
+	filter := bson.M{"email": email}
+
+	// Create an update document with the new value for the isVerify field
+	update := bson.M{"$set": bson.M{"isVerify": true}}
+
+	// Update the user record in the database
+	result, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.ModifiedCount == 0 {
+		// User not found
+		return fmt.Errorf("user with email %s not found", email)
+	}
 	return c.JSON(fiber.Map{
 		"message": "OTP verified successfully",
 	})
