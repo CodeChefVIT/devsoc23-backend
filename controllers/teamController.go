@@ -1,5 +1,6 @@
 package controller
 
+/*
 import (
 	"context"
 	"devsoc23-backend/models"
@@ -45,3 +46,4 @@ func (databaseClient Database) FinaliseTeam(ctx *fiber.Ctx) error {
 
 	return
 }
+*/
