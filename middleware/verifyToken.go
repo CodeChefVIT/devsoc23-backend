@@ -27,11 +27,13 @@ func VerifyToken(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "You are not logged in"})
 	}
 
-	sub, err := utils.ValidateToken(token, os.Getenv("JWT_SECRET"))
+	res, err := utils.ValidateToken(token, os.Getenv("JWT_SECRET"))
+
 	if err != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
-	filter := bson.M{"email": sub}
+
+	filter := bson.M{"email": res.Email}
 
 	user := models.User{}
 	userCollection := database.NewDatabase().MongoClient.Database("devsoc").Collection("users")
