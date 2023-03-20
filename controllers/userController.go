@@ -81,6 +81,12 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
+	filter := bson.M{"email": payload.Email}
+	count, _ := userCollection.CountDocuments(context.TODO(), filter)
+	if count > 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Email already exists"})
+	}
+
 	now := time.Now()
 	userRole := "HACKER"
 	hash, _ := HashPassword(*payload.Password)
@@ -355,4 +361,59 @@ func (databaseClient Database) Verifyotp(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "OTP verified successfully",
 	})
+}
+
+func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
+
+	// Get request body and bind to payload
+	var payload *models.ResetPasswordRequest
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
+	}
+
+	// Validate Struct
+	errors := utils.ValidateStruct(payload)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	// Check if oldpass and newpass are same
+	hash,_ := HashPassword(*payload.Newpass)
+	match := CheckPasswordHash(*payload.Oldpass, hash)
+
+	if match {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err":"Old password and New password cannot be the same."})
+	}
+
+	// Get User 
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	email := ctx.GetRespHeader("currentUser")
+
+	if email == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
+	}
+
+	findUser := models.User{}
+	filter := bson.M{"email": email}
+
+	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+
+	// Check if oldpass matches 
+	match = CheckPasswordHash(*payload.Oldpass, *findUser.Password)
+
+	if !match { 
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Old password is incorrect"})
+	}
+
+	// Update user with new password 
+	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"email": findUser.Email}, bson.M{"$set": bson.M{"password": &hash}})
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update password"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Password successfully reset"})
 }

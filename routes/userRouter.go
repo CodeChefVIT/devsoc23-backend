@@ -21,4 +21,6 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	userGroup := incomingRoutes.Group("/users", middleware.VerifyToken)
 	userGroup.Get("/me", h.FindUser)
 	userGroup.Get("/logout", h.LogoutUser)
+	userGroup.Get("/reset", h.ResetPassword)
+
 }
