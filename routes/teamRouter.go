@@ -2,14 +2,16 @@ package routes
 
 import (
 	controller "devsoc23-backend/controllers"
+	"devsoc23-backend/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func TeamRoutes(incomingRoutes *fiber.App, h *controller.Database) {
+
+	teamGroup := incomingRoutes.Group("/teams", middleware.VerifyToken)
+	teamGroup.Post("/create", h.CreateTeam)
 	/*
-		teamGroup := incomingRoutes.Group("/teams", middleware.VerifyToken)
-		teamGroup.Post("/create", h.CreateTeam)
 		teamGroup.Get("/:teamId", h.GetTeam)
 		teamGroup.Get("/all", h.GetTeams)
 		teamGroup.Post("/:teamId", h.UpdateTeam)
