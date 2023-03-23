@@ -18,13 +18,14 @@ import (
 
 var store = make(map[string]string)
 
-type EmailData struct {
-	Email string `json:"email"`
-}
-
+/*
+	type EmailData struct {
+		Email string `json:"email"`
+	}
+*/
 type EmailOTPData struct {
-	Email string `json:"email"`
-	OTP   string `json:"otp"`
+	//Email string `json:"email"`
+	OTP string `json:"otp"`
 }
 
 func (databaseClient Database) GetUsers(ctx *fiber.Ctx) error {
@@ -260,13 +261,15 @@ func (databaseClient Database) LogoutUser(ctx *fiber.Ctx) error {
 
 func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	// Get email from request body
-	var emailData EmailData
-	if err := c.BodyParser(&emailData); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request",
-		})
-	}
-	email := emailData.Email
+	/*
+		var emailData EmailData
+		if err := c.BodyParser(&emailData); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid request",
+			})
+		}
+	*/
+	email := c.GetRespHeader("currentUser")
 	// Generate OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
@@ -300,7 +303,7 @@ func (databaseClient Database) Verifyotp(c *fiber.Ctx) error {
 			"error": "invalid request",
 		})
 	}
-	email := emailotpData.Email
+	email := c.GetRespHeader("currentUser")
 	otp := emailotpData.OTP
 	// Retrieve OTP from store
 	storedOtp, ok := store[email]
@@ -360,8 +363,10 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 	}
 
 	// Check if oldpass and newpass are same
+
 	hash, _ := utils.HashPassword(*payload.Newpass)
 	match := utils.CheckPasswordHash(*payload.Oldpass, hash)
+ 
 
 	if match {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Old password and New password cannot be the same."})
@@ -386,6 +391,7 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 	}
 
 	// Check if oldpass matches
+
 	match = utils.CheckPasswordHash(*payload.Oldpass, *findUser.Password)
 
 	if !match {
