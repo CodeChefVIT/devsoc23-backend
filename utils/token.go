@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TokenPayload struct {
-	Email string
-	Role  string
+	Id   primitive.ObjectID
+	Role string
 }
 
 func GenerateToken(ttl time.Duration, payload TokenPayload, secretJWTKey string) (string, error) {
@@ -18,7 +19,7 @@ func GenerateToken(ttl time.Duration, payload TokenPayload, secretJWTKey string)
 	now := time.Now().UTC()
 	claims := token.Claims.(jwt.MapClaims)
 
-	claims["sub"] = payload.Email
+	claims["sub"] = payload.Id
 	claims["role"] = payload.Role
 	claims["exp"] = now.Add(ttl).Unix()
 	claims["iat"] = now.Unix()
@@ -49,10 +50,10 @@ func ValidateToken(token string, signedJWTKey string) (TokenPayload, error) {
 	if !ok || !tok.Valid {
 		return TokenPayload{}, fmt.Errorf("invalid token claim")
 	}
-
+	id, _ := primitive.ObjectIDFromHex(claims["sub"].(string))
 	res := TokenPayload{
-		Email: claims["sub"].(string),
-		Role:  claims["role"].(string),
+		Id:   id,
+		Role: claims["role"].(string),
 	}
 	return res, nil
 }
