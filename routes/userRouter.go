@@ -22,5 +22,8 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	userGroup.Get("/me", h.FindUser)
 	userGroup.Get("/logout", h.LogoutUser)
 	userGroup.Get("/reset", h.ResetPassword)
+	
+	userGroup.Patch("/checkin", h.CheckIn)
+	userGroup.Patch("/checkout", h.CheckOut)
 
 }
