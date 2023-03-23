@@ -11,12 +11,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-gomail/gomail"
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var store = make(map[string]string)
@@ -29,16 +26,6 @@ var store = make(map[string]string)
 type EmailOTPData struct {
 	//Email string `json:"email"`
 	OTP string `json:"otp"`
-}
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
-}
-
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
 }
 
 func (databaseClient Database) GetUsers(ctx *fiber.Ctx) error {
@@ -90,7 +77,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 
 	now := time.Now()
 	userRole := "HACKER"
-	hash, _ := HashPassword(*payload.Password)
+	hash, _ := utils.HashPassword(*payload.Password)
 
 	newUser := models.User{
 		Id:          primitive.NewObjectID(),
@@ -123,8 +110,8 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 
 	duration, _ := time.ParseDuration("1h")
 	sub := utils.TokenPayload{
-		Email: *newUser.Email,
-		Role:  newUser.UserRole,
+		Id:   newUser.Id,
+		Role: newUser.UserRole,
 	}
 	token, err := utils.GenerateToken(duration, sub, os.Getenv("REFRESH_JWT_SECRET"))
 	if err != nil {
@@ -143,16 +130,16 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
-	email := ctx.GetRespHeader("currentUser")
+	id, err := primitive.ObjectIDFromHex(ctx.GetRespHeader("currentUser"))
 
-	if email == "" {
+	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
 	}
 
 	findUser := models.User{}
-	filter := bson.M{"email": email}
+	filter := bson.M{"_id": id}
 
-	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+	err = userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
@@ -225,7 +212,7 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 	}
 
 	// Compare password hashes
-	match := CheckPasswordHash(*payload.Password, *findUser.Password)
+	match := utils.CheckPasswordHash(*payload.Password, *findUser.Password)
 
 	if !match {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Wrong password"})
@@ -234,8 +221,8 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 	// Create a new refreshToken
 	duration, _ := time.ParseDuration("1h")
 	sub := utils.TokenPayload{
-		Email: *findUser.Email,
-		Role:  findUser.UserRole,
+		Id:   findUser.Id,
+		Role: findUser.UserRole,
 	}
 	token, err := utils.GenerateToken(duration, sub, os.Getenv("REFRESH_JWT_SECRET"))
 	if err != nil {
@@ -254,12 +241,17 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 func (databaseClient Database) LogoutUser(ctx *fiber.Ctx) error {
 
 	// Get current user from the response header
-	email := ctx.GetRespHeader("currentUser")
+	user := ctx.GetRespHeader("currentUser")
+	id, err := primitive.ObjectIDFromHex(user)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+	}
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
 	// Update refreshToken in user document
-	_, err := userCollection.UpdateOne(context.TODO(), bson.M{"email": email}, bson.M{"$set": bson.M{"token": nil}})
+	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"_id": id}, bson.M{"$set": bson.M{"token": nil}})
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
 	}
@@ -285,22 +277,12 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	store[email] = otp
 
 	// Send email with OTP
-	m := gomail.NewMessage()
-	m.SetHeader("From", "noreplydevsoc23test@gmail.com")
-	m.SetHeader("To", email)
-	m.SetHeader("Subject", "Your OTP for Devsoc verification")
-	m.SetBody("text/plain", "Your Devsoc verification OTP is: "+otp)
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	from_emailid := os.Getenv("TEST_EMAILID")
-	app_pass := os.Getenv(" TEST_EMAILID_PASS")
-	d := gomail.NewDialer("smtp.gmail.com", 587, from_emailid, app_pass)
+	subject := "Your OTP for Devsoc verification"
+	body := "Your Devsoc verification OTP is: " + otp
+	err := utils.SendMail(subject, body, email)
 
 	// Send the email
-	if err := d.DialAndSend(m); err != nil {
+	if err != nil {
 		// Return error if email cannot be sent
 		fmt.Println("Error reason: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -381,8 +363,10 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 	}
 
 	// Check if oldpass and newpass are same
-	hash, _ := HashPassword(*payload.Newpass)
-	match := CheckPasswordHash(*payload.Oldpass, hash)
+
+	hash, _ := utils.HashPassword(*payload.Newpass)
+	match := utils.CheckPasswordHash(*payload.Oldpass, hash)
+ 
 
 	if match {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Old password and New password cannot be the same."})
@@ -390,23 +374,25 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 
 	// Get User
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
-	email := ctx.GetRespHeader("currentUser")
+	user := ctx.GetRespHeader("currentUser")
+	id, err := primitive.ObjectIDFromHex(user)
 
-	if email == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User does not exist"})
 	}
 
 	findUser := models.User{}
-	filter := bson.M{"email": email}
+	filter := bson.M{"_id": id}
 
-	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+	err = userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
 	}
 
 	// Check if oldpass matches
-	match = CheckPasswordHash(*payload.Oldpass, *findUser.Password)
+
+	match = utils.CheckPasswordHash(*payload.Oldpass, *findUser.Password)
 
 	if !match {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Old password is incorrect"})

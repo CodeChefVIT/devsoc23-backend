@@ -33,7 +33,7 @@ func VerifyToken(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	filter := bson.M{"email": res.Email}
+	filter := bson.M{"_id": res.Id}
 
 	user := models.User{}
 	userCollection := database.NewDatabase().MongoClient.Database("devsoc").Collection("users")
@@ -44,6 +44,6 @@ func VerifyToken(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists"})
 	}
 
-	ctx.Set("currentUser", *user.Email)
+	ctx.Set("currentUser", user.Id.Hex())
 	return ctx.Next()
 }
