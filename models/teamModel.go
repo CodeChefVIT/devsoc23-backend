@@ -10,13 +10,13 @@ type Team struct {
 	Id               primitive.ObjectID   `bson:"_id"`
 	TeamName         *string              `json:"teamName" validate:"required"`
 	TeamLeaderId     primitive.ObjectID   `bson:"leaderId"`
-	TeamMembers      []primitive.ObjectID `json:"teamMember"`
-	TeamSize         *string              `json:"teamSize"`
+	TeamMembers      []primitive.ObjectID `bson:"teamMember" json:"teamMember"`
+	TeamSize         int                  `bson:"teamSize" json:"teamSize"`
 	ProjectId        primitive.ObjectID   `bson:"projectId,omitempty"`
 	InvitedTeammates *string              `json:"invitedTeammates,omitempty"`
 	Round            *string              `json:"round,omitempty"`
 	IsFinalised      bool                 `json:"isFinalised,omitempty"`
-	InviteLink       *string              `json:"InviteLink,omitempty"`
+	InviteCode       string              `bson:"inviteCode" json:"inviteCode,omitempty"`
 	CreatedAt        time.Time            `json:"createdTime"`
 	UpdatedAt        time.Time            `json:"updatedTime"`
 }
@@ -26,7 +26,7 @@ type CreateTeamRequest struct {
 	TeamName         *string              `json:"teamName" validate:"required"`
 	TeamLeaderId     primitive.ObjectID   `bson:"leaderId"`
 	TeamMembers      []primitive.ObjectID `json:"teamMember"`
-	TeamSize         *string              `json:"teamSize"`
+	TeamSize         int                  `json:"teamSize"`
 	ProjectId        primitive.ObjectID   `bson:"projectId,omitempty"`
 	InvitedTeammates *string              `json:"invitedTeammates,omitempty"`
 	Round            *string              `json:"round,omitempty"`
@@ -41,7 +41,7 @@ type UpdateTeam struct {
 	TeamName         *string              `json:"teamName,omitempty"`
 	TeamLeaderId     primitive.ObjectID   `bson:"leaderId,omitempty"`
 	TeamMembers      []primitive.ObjectID `json:"teamMember,omitempty"`
-	TeamSize         *string              `json:"teamSize,omitempty"`
+	TeamSize         int                  `json:"teamSize,omitempty"`
 	ProjectId        primitive.ObjectID   `bson:"projectId,omitempty"`
 	InvitedTeammates *string              `json:"invitedTeammates,omitempty"`
 	Round            *string              `json:"round,omitempty"`
