@@ -9,10 +9,11 @@ import (
 
 func TeamRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 
-	teamGroup := incomingRoutes.Group("/teams", middleware.VerifyToken)
+	teamGroup := incomingRoutes.Group("/team", middleware.VerifyToken)
 	teamGroup.Post("/create", h.CreateTeam)
 
-	teamGroup.Patch("/:teamId/:inviteCode", h.JoinTeam)
+	teamGroup.Patch("/join/:teamId/:inviteCode", h.JoinTeam)
+	teamGroup.Patch("/leave", h.LeaveTeam)
 	/*
 		teamGroup.Get("/:teamId", h.GetTeam)
 		teamGroup.Get("/all", h.GetTeams)
