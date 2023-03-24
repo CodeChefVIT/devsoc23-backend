@@ -280,3 +280,67 @@ func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 
 // 	return
 // }
+
+func (databaseClient Database) LeaveTeam(ctx *fiber.Ctx) error {
+
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	idString := ctx.GetRespHeader("currentUser")
+
+	if idString == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Id does not exist"})
+	}
+
+	id, err := primitive.ObjectIDFromHex(idString)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User ID not parsable"})
+	}
+
+	findUser := models.User{}
+	filter := bson.M{"_id": id}
+
+	if err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+
+	if !findUser.InTeam {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you are in no team"})
+	}
+	teamId := findUser.TeamId
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+
+	findTeam := models.Team{}
+	filterTeam := bson.M{"_id": teamId}
+
+	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
+
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
+	}
+
+	if id == findTeam.TeamLeaderId {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you cannot leave your team"})
+	}
+
+
+	updateTeam := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "teamSize", Value: findTeam.TeamSize - 1}}},
+		{Key: "$pull", Value: bson.D{{Key: "teamMember", Value: id}}},
+	}
+
+	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": teamId}, updateTeam)
+	if errr != nil {
+		log.Fatal(err)
+	}
+	update := bson.M{"inTeam": false, "teamId": ""}
+	updateUser := bson.M{
+		"$set": update,
+	}
+
+	result, err := userCollection.UpdateOne(context.TODO(), filter, updateUser)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User leaving failed"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": result, "team message": res})
+}
