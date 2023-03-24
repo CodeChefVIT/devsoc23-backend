@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"devsoc23-backend/helper"
 	"devsoc23-backend/models"
 	"devsoc23-backend/utils"
 	"fmt"
@@ -44,18 +45,19 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
 	now := time.Now()
+	inviteCode := helper.RandSeq(6)
 
 	newTeam := models.Team{
 		Id:               primitive.NewObjectID(),
 		TeamName:         payload.TeamName,
 		TeamLeaderId:     findUser.Id,
 		TeamMembers:      payload.TeamMembers,
-		TeamSize:         payload.TeamSize,
+		TeamSize:         1,
 		ProjectId:        primitive.NewObjectID(),
 		InvitedTeammates: payload.InvitedTeammates,
 		Round:            payload.Round,
 		IsFinalised:      false,
-		InviteLink:       payload.InviteLink,
+		InviteCode:       inviteCode,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -146,6 +148,71 @@ func (databaseClient Database) GetTeamMembers(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "teamMembers": findTeam.TeamMembers})
 }
 
+func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
+
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	idString := ctx.GetRespHeader("currentUser")
+
+	if idString == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Id does not exist"})
+	}
+
+	id, err := primitive.ObjectIDFromHex(idString)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User ID not parsable"})
+	}
+
+	findUser := models.User{}
+	filter := bson.M{"_id": id}
+
+	if err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+
+	teamId := ctx.Params("teamId")
+	inviteCode := ctx.Params("inviteCode")
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+
+	findTeam := models.Team{}
+	filterTeam := bson.M{"_id": teamId}
+
+	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
+
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
+	}
+
+	if id == findTeam.TeamLeaderId {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you cannot invite yourself for your team"})
+	}
+
+	if findTeam.InviteCode != inviteCode {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Wrong Invite Code"})
+
+	}
+	if findTeam.TeamSize == 4 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team is full"})
+	}
+
+	for i := 1; i < findTeam.TeamSize; i++ {
+		if findTeam.TeamMembers[i] == id {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you already joined the team"})
+		}
+	}
+
+	updateTeam := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "teamSize", Value: findTeam.TeamSize + 1}}},
+		{Key: "$push", Value: bson.D{{Key: "teamMember", Value: id}}},
+	}
+
+	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": teamId}, updateTeam)
+	if errr != nil {
+		log.Fatal(err)
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
+}
+
 /*
 func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
@@ -196,20 +263,13 @@ func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 
 }
 */
-/*
 
-func (databaseClient Database) DeleteTeam(ctx *fiber.Ctx) error {
+// func (databaseClient Database) DeleteTeam(ctx *fiber.Ctx) error {
 
-	return
-}
+// 	return
+// }
 
-func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
+// func (databaseClient Database) FinaliseTeam(ctx *fiber.Ctx) error {
 
-	return
-}
-
-func (databaseClient Database) FinaliseTeam(ctx *fiber.Ctx) error {
-
-	return
-}
-*/
+// 	return
+// }
