@@ -64,3 +64,9 @@ type ResetPasswordRequest struct {
 	Oldpass *string `json:"oldpass" validate:"required,min=8,max=64"`
 	Newpass *string `json:"newpass" validate:"required,min=8,max=64"`
 }
+
+type ForgetPasswordRequest struct {
+	Email   string `json:"email"`
+	OTP     string `json:"otp"`
+	Newpass string `json:"newpass"`
+}
