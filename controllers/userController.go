@@ -17,15 +17,15 @@ import (
 )
 
 var store = make(map[string]string)
+var reset = make(map[string]string)
 
-/*
-	type EmailData struct {
-		Email string `json:"email"`
-	}
-*/
+type EmailData struct {
+	Email string `json:"email"`
+}
+
 type EmailOTPData struct {
-	//Email string `json:"email"`
-	OTP string `json:"otp"`
+	Email string `json:"email"`
+	OTP   string `json:"otp"`
 }
 
 func (databaseClient Database) GetUsers(ctx *fiber.Ctx) error {
@@ -261,15 +261,15 @@ func (databaseClient Database) LogoutUser(ctx *fiber.Ctx) error {
 
 func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	// Get email from request body
-	/*
-		var emailData EmailData
-		if err := c.BodyParser(&emailData); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "invalid request",
-			})
-		}
-	*/
-	email := c.GetRespHeader("currentUser")
+
+	var emailData EmailData
+	if err := c.BodyParser(&emailData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request",
+		})
+	}
+
+	email := emailData.Email
 	// Generate OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
@@ -303,7 +303,7 @@ func (databaseClient Database) Verifyotp(c *fiber.Ctx) error {
 			"error": "invalid request",
 		})
 	}
-	email := c.GetRespHeader("currentUser")
+	email := emailotpData.Email
 	otp := emailotpData.OTP
 	// Retrieve OTP from store
 	storedOtp, ok := store[email]
@@ -366,7 +366,6 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 
 	hash, _ := utils.HashPassword(*payload.Newpass)
 	match := utils.CheckPasswordHash(*payload.Oldpass, hash)
- 
 
 	if match {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Old password and New password cannot be the same."})
@@ -405,4 +404,84 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Password successfully reset"})
+}
+
+func (databaseClient Database) ForgetPasswordMail(ctx *fiber.Ctx) error {
+	// Get request body and bind to payload
+	var payload EmailData
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
+	}
+	email := payload.Email
+	// Generate OTP
+	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+	// Store OTP
+	reset[email] = otp
+
+	// Send email with OTP
+	subject := "Password Reset Request"
+	body := "Your password reset OTP is: " + otp
+	err := utils.SendMail(subject, body, email)
+
+	// Send the email
+	if err != nil {
+		// Return error if email cannot be sent
+		fmt.Println("Error reason: ", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status": "fail", "message": "Failed to send OTP",
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Reset email sent successfully"})
+}
+
+func (databaseClient Database) ForgetPassword(ctx *fiber.Ctx) error {
+
+	// Get request body and bind to payload
+	var payload *models.ForgetPasswordRequest
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
+	}
+	email := payload.Email
+	otp := payload.OTP
+	// Retrieve OTP from store
+	storedOtp, ok := reset[email]
+	if !ok {
+		// Return error if OTP not found for email
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "OTP not found",
+		})
+	}
+
+	// Compare OTP
+	if otp != storedOtp {
+		// Return error if OTP is incorrect
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Incorrect OTP",
+		})
+	}
+
+	// Delete OTP from store
+	delete(store, email)
+
+	hash, _ := utils.HashPassword(payload.Newpass)
+	collection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	// Create a filter to find the user with the given email
+	filter := bson.M{"email": email}
+
+	// Update new password
+	update := bson.M{"$set": bson.M{"password": hash}}
+
+	// Update the user record in the database
+	result, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.ModifiedCount == 0 {
+		// User not found
+		return fmt.Errorf("user with email %s not found", email)
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Reset email sent successfully"})
 }
