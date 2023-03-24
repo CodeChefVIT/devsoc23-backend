@@ -15,13 +15,14 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	incomingRoutes.Post("/users/signup", h.RegisterUser)
 	incomingRoutes.Get("/users", h.GetUsers)
 	incomingRoutes.Post("/users/refresh", h.RefreshToken)
-	incomingRoutes.Get("/users/sendotp", h.Sendotp)
 	incomingRoutes.Patch("/users/verifyotp", h.Verifyotp)
-
+	
 	userGroup := incomingRoutes.Group("/users", middleware.VerifyToken)
 	userGroup.Get("/me", h.FindUser)
 	userGroup.Get("/logout", h.LogoutUser)
 	userGroup.Get("/reset", h.ResetPassword)
+	userGroup.Get("/sendotp", h.Sendotp)
+	
 
 	userGroup.Patch("/checkin", h.CheckIn)
 	userGroup.Patch("/checkout", h.CheckOut)
