@@ -149,6 +149,76 @@ func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser})
 }
 
+func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
+
+	// Get request body and bind to payload
+	var payload *models.UpdateUserRequest
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
+	}
+
+	// Validate Struct
+	errors := utils.ValidateStruct(payload)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	// Get current user from the response header
+	user := ctx.GetRespHeader("currentUser")
+	id, err := primitive.ObjectIDFromHex(user)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+	}
+
+	// Create user object
+	update := bson.M{
+		"firstName":   payload.FirstName,
+		"lastName":    payload.LastName,
+		"email":       payload.Email,
+		"phoneNumber": payload.PhoneNumber,
+		"college":     payload.College,
+		"collegeYear": payload.CollegeYear,
+		"birthDate":   payload.BirthDate,
+		"isActive":    false,
+		"isCanShare":  false,
+		"inTeam":      false,
+		"updatedAt":   time.Now(),
+	}
+
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+
+	// Update user in user document
+	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"_id": id}, bson.M{"$set": update})
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update user"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "User updated succesfully"})
+}
+
+func (databaseClient Database) DeleteUser(ctx *fiber.Ctx) error {
+
+	// Get current user from the response header
+	user := ctx.GetRespHeader("currentUser")
+	id, err := primitive.ObjectIDFromHex(user)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+	}
+
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+
+	// Delete user from user document
+	filter := bson.M{"_id": id}
+	deleteResult, _ := userCollection.DeleteOne(context.TODO(), filter)
+
+	if deleteResult.DeletedCount == 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": "User not deleted"})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "User deleted succesfully"})
+}
+
 func (databaseClient Database) RefreshToken(ctx *fiber.Ctx) error {
 
 	type tokenRequest struct {
