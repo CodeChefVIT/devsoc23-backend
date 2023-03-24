@@ -170,6 +170,9 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
 	}
 
+	if findUser.InTeam {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you are already in team"})
+	}
 	teamId := ctx.Params("teamId")
 	inviteCode := ctx.Params("inviteCode")
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
@@ -195,12 +198,6 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team is full"})
 	}
 
-	for i := 1; i < findTeam.TeamSize; i++ {
-		if findTeam.TeamMembers[i] == id {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you already joined the team"})
-		}
-	}
-
 	updateTeam := bson.D{
 		{Key: "$set", Value: bson.D{{Key: "teamSize", Value: findTeam.TeamSize + 1}}},
 		{Key: "$push", Value: bson.D{{Key: "teamMember", Value: id}}},
@@ -210,7 +207,17 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 	if errr != nil {
 		log.Fatal(err)
 	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
+	update := bson.M{"inTeam": true, "teamId": teamId}
+	updateUser := bson.M{
+		"$set": update,
+	}
+
+	result, err := userCollection.UpdateOne(context.TODO(), filter, updateUser)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User Update failed"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": result, "team message": res})
 }
 
 /*
