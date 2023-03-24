@@ -9,19 +9,20 @@ import (
 
 func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 
-	// incomingRoutes.GET("/users", controller.GetUsers())
-	// incomingRoutes.GET("/users/:user_id", controller.GetUser())
 	incomingRoutes.Post("/users/login", h.LoginUser)
 	incomingRoutes.Post("/users/signup", h.RegisterUser)
 	incomingRoutes.Get("/users", h.GetUsers)
 	incomingRoutes.Post("/users/refresh", h.RefreshToken)
 	incomingRoutes.Patch("/users/verifyotp", h.Verifyotp)
+	incomingRoutes.Post("/sendotp", h.Sendotp)
+	incomingRoutes.Post("/users/forgot/mail", h.ForgotPasswordMail)
+	incomingRoutes.Patch("/users/forgot", h.ForgotPassword)
+
 	
 	userGroup := incomingRoutes.Group("/users", middleware.VerifyToken)
 	userGroup.Get("/me", h.FindUser)
 	userGroup.Get("/logout", h.LogoutUser)
 	userGroup.Get("/reset", h.ResetPassword)
-	userGroup.Get("/sendotp", h.Sendotp)
 	
 
 	userGroup.Patch("/checkin", h.CheckIn)

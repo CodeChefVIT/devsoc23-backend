@@ -406,7 +406,7 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Password successfully reset"})
 }
 
-func (databaseClient Database) ForgetPasswordMail(ctx *fiber.Ctx) error {
+func (databaseClient Database) ForgotPasswordMail(ctx *fiber.Ctx) error {
 	// Get request body and bind to payload
 	var payload EmailData
 	if err := ctx.BodyParser(&payload); err != nil {
@@ -436,7 +436,7 @@ func (databaseClient Database) ForgetPasswordMail(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Reset email sent successfully"})
 }
 
-func (databaseClient Database) ForgetPassword(ctx *fiber.Ctx) error {
+func (databaseClient Database) ForgotPassword(ctx *fiber.Ctx) error {
 
 	// Get request body and bind to payload
 	var payload *models.ForgetPasswordRequest
@@ -481,7 +481,8 @@ func (databaseClient Database) ForgetPassword(ctx *fiber.Ctx) error {
 
 	if result.ModifiedCount == 0 {
 		// User not found
-		return fmt.Errorf("user with email %s not found", email)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": "user not found"})
+
 	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Reset email sent successfully"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Password updated successfully"})
 }
