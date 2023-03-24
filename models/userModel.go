@@ -34,6 +34,28 @@ type User struct {
 	UserId       string             `json:"userId"`
 }
 
+type UpdateUserRequest struct {
+	FirstName    *string            `json:"firstName" validate:"required,min=2,max=16"`
+	LastName     *string            `json:"lastName" validate:"min=2,max=32"`
+	Email        *string            `json:"email" validate:"required,email"`
+	PhoneNumber  *string            `json:"phoneNumber" validate:"required,e164,min=10,max=13"`
+	ProfilePhoto *string            `json:"profilePhoto,omitempty"`
+	College      *string            `json:"college,omitempty" validate:"min=10,max=128"`
+	CollegeYear  *string            `json:"collegeYear,omitempty"`
+	BirthDate    *string            `json:"birthData,omitempty"`
+	VerifyOtp    *string            `json:"verifyOtp,omitempty"`
+	Address      *string            `json:"address,omitempty"`
+	QrData       *string            `json:"qrData,omitempty"`
+	IsActive     bool               `json:"isActive,omitempty"`
+	IsVerify     bool               `json:"isVerify,omitempty"`
+	IsCanShare   bool               `json:"isCanShare,omitempty"`
+	IsCheckedIn  bool               `json:"isCheckedIn,omitempty"`
+	InTeam       bool               `json:"inTeam,omitempty"`
+	UpdatedAt    time.Time          `json:"updatedTime"`
+	TeamId       *string            `json:"teamId,omitempty"`
+	UserId       string             `json:"userId"`
+}
+
 type CreateUserRequest struct {
 	Id          primitive.ObjectID `bson:"_id"`
 	FirstName   *string            `json:"firstName" validate:"required,min=2,max=16"`
