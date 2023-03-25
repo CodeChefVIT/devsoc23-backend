@@ -29,6 +29,19 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User ID not parsable"})
 	}
 
+	Leader := models.User{}
+	filter := bson.M{"_id": LeaderId}
+
+	err = userCollection.FindOne(context.TODO(), filter).Decode(&Leader)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+
+	if Leader.InTeam {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Already in team"})
+	}
+
 	var payload models.CreateTeamRequest
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
@@ -69,7 +82,7 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
 	updateUserTeamId := bson.M{"$set": bson.M{"teamId": newTeam.Id}}
-	_, err = userCollection.UpdateMany(context.TODO(), filterUser, updateUserTeamId)
+	_, err = userCollection.UpdateOne(context.TODO(), filterUser, updateUserTeamId)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
