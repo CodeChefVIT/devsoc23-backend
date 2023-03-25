@@ -23,7 +23,7 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Id does not exist"})
 	}
 
-	id, err := primitive.ObjectIDFromHex(idString)
+	LeaderId, err := primitive.ObjectIDFromHex(idString)
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User ID not parsable"})
@@ -43,7 +43,7 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	newTeam := models.Team{
 		Id:               primitive.NewObjectID(),
 		TeamName:         payload.TeamName,
-		TeamLeaderId:     id,
+		TeamLeaderId:     LeaderId,
 		TeamMembers:      payload.TeamMembers,
 		TeamSize:         1,
 		ProjectId:        primitive.NewObjectID(),
@@ -57,10 +57,19 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 
 	result, err := teamCollection.InsertOne(context.TODO(), newTeam)
 
-	filterUser := bson.M{"_id": id}
-	updateUser := bson.M{"$set": bson.M{"InTeam": true}}
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team Not Inserted"})
+	}
 
-	_, err = userCollection.UpdateOne(context.TODO(), filterUser, updateUser)
+	filterUser := bson.M{"_id": LeaderId}
+	updateUserInTeam := bson.M{"$set": bson.M{"InTeam": true}}
+
+	_, err = userCollection.UpdateOne(context.TODO(), filterUser, updateUserInTeam)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
+	}
+	updateUserTeamId := bson.M{"$set": bson.M{"teamId": newTeam.Id}}
+	_, err = userCollection.UpdateMany(context.TODO(), filterUser, updateUserTeamId)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
