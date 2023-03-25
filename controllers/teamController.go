@@ -29,8 +29,10 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User ID not parsable"})
 	}
 
-	var payload *models.CreateTeamRequest
-
+	var payload models.CreateTeamRequest
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
 	errors := utils.ValidateStruct(payload)
 	if errors != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
@@ -42,15 +44,15 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	inviteCode := helper.RandSeq(6)
 
 	newTeam := models.Team{
-		Id:               primitive.NewObjectID(),
-		TeamName:         payload.TeamName,
-		TeamLeaderId:     LeaderId,
-		TeamSize:         1,
-		Round:            round,
-		IsFinalised:      false,
-		InviteCode:       inviteCode,
-		CreatedAt:        now,
-		UpdatedAt:        now,
+		Id:           primitive.NewObjectID(),
+		TeamName:     payload.TeamName,
+		TeamLeaderId: LeaderId,
+		TeamSize:     1,
+		Round:        round,
+		IsFinalised:  false,
+		InviteCode:   inviteCode,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
 	result, err := teamCollection.InsertOne(context.TODO(), newTeam)
