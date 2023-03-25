@@ -38,17 +38,15 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
 	now := time.Now()
+	round := "1st round"
 	inviteCode := helper.RandSeq(6)
 
 	newTeam := models.Team{
 		Id:               primitive.NewObjectID(),
 		TeamName:         payload.TeamName,
 		TeamLeaderId:     LeaderId,
-		TeamMembers:      payload.TeamMembers,
 		TeamSize:         1,
-		ProjectId:        primitive.NewObjectID(),
-		InvitedTeammates: payload.InvitedTeammates,
-		Round:            payload.Round,
+		Round:            round,
 		IsFinalised:      false,
 		InviteCode:       inviteCode,
 		CreatedAt:        now,
