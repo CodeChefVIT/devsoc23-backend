@@ -22,7 +22,7 @@ type Team struct {
 }
 
 type CreateTeamRequest struct {
-	TeamName *string `bson:"teamName" json:"teamName" validate:"required"`
+	TeamName *string `bson:"teamName" json:"teamName,omitempty"`
 }
 
 type UpdateTeam struct {
