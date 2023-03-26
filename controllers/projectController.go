@@ -80,7 +80,7 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
 	}
 	fmt.Println("Projectid: ", find_team.ProjectId)
-	if !(find_team.ProjectId.IsZero()) {
+	if find_team.ProjectExists {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "project already exists"})
 	}
 	//inserting project:
@@ -107,7 +107,7 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 	fmt.Println("Inserted")
 
 	//updating project id in team:
-	team_update := bson.M{"$set": bson.M{"projectId": newProject.Id}}
+	team_update := bson.M{"$set": bson.M{"projectId": newProject.Id, "projectExists": true}}
 	team_result, err := teamCollection.UpdateOne(context.Background(), team_filter, team_update)
 	if err != nil {
 		return err
@@ -219,7 +219,7 @@ func (databaseClient Database) DeleteProject(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
 	}
 	team_filter := bson.M{"_id": team_objectid}
-	team_update := bson.M{"$unset": bson.M{"projectId": nil}}
+	team_update := bson.M{"$unset": bson.M{"projectId": "1", "projectExists": false}}
 	team_result, err := teamCollection.UpdateOne(context.Background(), team_filter, team_update)
 	if err != nil {
 		return err
