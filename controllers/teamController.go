@@ -57,15 +57,16 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	inviteCode := helper.RandSeq(6)
 
 	newTeam := models.Team{
-		Id:           primitive.NewObjectID(),
-		TeamName:     payload.TeamName,
-		TeamLeaderId: LeaderId,
-		TeamSize:     1,
-		Round:        round,
-		IsFinalised:  false,
-		InviteCode:   inviteCode,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		Id:            primitive.NewObjectID(),
+		TeamName:      payload.TeamName,
+		TeamLeaderId:  LeaderId,
+		TeamSize:      1,
+		ProjectExists: false,
+		Round:         round,
+		IsFinalised:   false,
+		InviteCode:    inviteCode,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
 	result, err := teamCollection.InsertOne(context.TODO(), newTeam)

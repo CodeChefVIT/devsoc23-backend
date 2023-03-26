@@ -13,6 +13,7 @@ type Team struct {
 	TeamMembers      []primitive.ObjectID `bson:"teamMember" json:"teamMember"`
 	TeamSize         int                  `bson:"teamSize" json:"teamSize"`
 	ProjectId        primitive.ObjectID   `bson:"projectId,omitempty"`
+	ProjectExists    bool                 `json:"projectExists,omitempty"`
 	InvitedTeammates []primitive.ObjectID `json:"invitedTeammates,omitempty"`
 	Round            string               `json:"round,omitempty"`
 	IsFinalised      bool                 `json:"isFinalised,omitempty"`
