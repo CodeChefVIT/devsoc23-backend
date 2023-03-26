@@ -173,17 +173,17 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 
 	// Create user object
 	update := bson.M{
-		"firstName":   payload.FirstName,
-		"lastName":    payload.LastName,
+		"firstname":   payload.FirstName,
+		"lastname":    payload.LastName,
 		"email":       payload.Email,
-		"phoneNumber": payload.PhoneNumber,
+		"phonenumber": payload.PhoneNumber,
 		"college":     payload.College,
-		"collegeYear": payload.CollegeYear,
-		"birthDate":   payload.BirthDate,
-		"isActive":    false,
-		"isCanShare":  false,
-		"inTeam":      false,
-		"updatedAt":   time.Now(),
+		"collegeyear": payload.CollegeYear,
+		"birthdate":   payload.BirthDate,
+		"isactive":    false,
+		"iscanshare":  false,
+		"inteam":      false,
+		"updatedat":   time.Now(),
 	}
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
@@ -477,12 +477,20 @@ func (databaseClient Database) ResetPassword(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) ForgotPasswordMail(ctx *fiber.Ctx) error {
+	var userCollection = databaseClient.MongoClient.Database("devsoc").Collection("users")
 	// Get request body and bind to payload
 	var payload EmailData
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
 	}
 	email := payload.Email
+	findUser := models.User{}
+	filter := bson.M{"email": email}
+	errr := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email not found"})
+	}
+	
 	// Generate OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
@@ -507,7 +515,7 @@ func (databaseClient Database) ForgotPasswordMail(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) ForgotPassword(ctx *fiber.Ctx) error {
-
+	var userCollection = databaseClient.MongoClient.Database("devsoc").Collection("users")
 	// Get request body and bind to payload
 	var payload *models.ForgetPasswordRequest
 	if err := ctx.BodyParser(&payload); err != nil {
@@ -515,6 +523,12 @@ func (databaseClient Database) ForgotPassword(ctx *fiber.Ctx) error {
 	}
 	email := payload.Email
 	otp := payload.OTP
+	findUser := models.User{}
+	filter := bson.M{"email": email}
+	errr := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email not found"})
+	}
 	// Retrieve OTP from store
 	storedOtp, ok := reset[email]
 	if !ok {
@@ -536,15 +550,12 @@ func (databaseClient Database) ForgotPassword(ctx *fiber.Ctx) error {
 	delete(store, email)
 
 	hash, _ := utils.HashPassword(payload.Newpass)
-	collection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 	// Create a filter to find the user with the given email
-	filter := bson.M{"email": email}
-
 	// Update new password
 	update := bson.M{"$set": bson.M{"password": hash}}
 
 	// Update the user record in the database
-	result, err := collection.UpdateOne(context.Background(), filter, update)
+	result, err := userCollection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return err
 	}

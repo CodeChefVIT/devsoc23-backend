@@ -13,27 +13,17 @@ type Team struct {
 	TeamMembers      []primitive.ObjectID `bson:"teamMember" json:"teamMember"`
 	TeamSize         int                  `bson:"teamSize" json:"teamSize"`
 	ProjectId        primitive.ObjectID   `bson:"projectId,omitempty"`
-	InvitedTeammates *string              `json:"invitedTeammates,omitempty"`
-	Round            *string              `json:"round,omitempty"`
+	ProjectExists    bool                 `json:"projectExists,omitempty"`
+	InvitedTeammates []primitive.ObjectID `json:"invitedTeammates,omitempty"`
+	Round            string               `json:"round,omitempty"`
 	IsFinalised      bool                 `json:"isFinalised,omitempty"`
-	InviteCode       string              `bson:"inviteCode" json:"inviteCode,omitempty"`
+	InviteCode       string               `bson:"inviteCode" json:"inviteCode,omitempty"`
 	CreatedAt        time.Time            `json:"createdTime"`
 	UpdatedAt        time.Time            `json:"updatedTime"`
 }
 
 type CreateTeamRequest struct {
-	Id               primitive.ObjectID   `bson:"_id"`
-	TeamName         *string              `json:"teamName" validate:"required"`
-	TeamLeaderId     primitive.ObjectID   `bson:"leaderId"`
-	TeamMembers      []primitive.ObjectID `json:"teamMember"`
-	TeamSize         int                  `json:"teamSize"`
-	ProjectId        primitive.ObjectID   `bson:"projectId,omitempty"`
-	InvitedTeammates *string              `json:"invitedTeammates,omitempty"`
-	Round            *string              `json:"round,omitempty"`
-	IsFinalised      bool                 `json:"isFinalised,omitempty"`
-	InviteLink       *string              `json:"InviteLink,omitempty"`
-	CreatedAt        time.Time            `json:"createdTime"`
-	UpdatedAt        time.Time            `json:"updatedTime"`
+	TeamName *string `bson:"teamName" json:"teamName,omitempty"`
 }
 
 type UpdateTeam struct {
