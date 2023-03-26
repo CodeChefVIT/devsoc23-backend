@@ -13,7 +13,7 @@ func TeamRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	teamGroup.Post("/create", h.CreateTeam)
 	teamGroup.Patch("/join/:teamId/:inviteCode", h.JoinTeam)
 	teamGroup.Patch("/leave", h.LeaveTeam)
-	teamGroup.Get("/:teamId", h.GetTeam)
+	teamGroup.Get("/get/:teamId", h.GetTeam)
 	teamGroup.Get("/all", h.GetTeams)
 	teamGroup.Get("/members/:teamId", h.GetTeamMembers)
 	teamGroup.Post("/:teamId", h.UpdateTeam)
