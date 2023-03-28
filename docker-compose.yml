@@ -42,12 +42,9 @@ services:
     environment:
       - Replica= {{.Task.Name}}
     depends_on:
-      - db
       - mongo
     networks:
       - "web.network"
-    links:
-      - "db:database"
     deploy:
       replicas: 1
 networks:
