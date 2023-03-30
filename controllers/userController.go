@@ -55,7 +55,6 @@ func (databaseClient Database) GetUsers(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
-	//Incomplete logic : check for unique user
 	var payload *models.CreateUserRequest
 
 	if err := ctx.BodyParser(&payload); err != nil {
@@ -119,7 +118,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	}
 
 	// Update refreshToken in user document
-	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"email": newUser.Email}, bson.M{"$set": bson.M{"token": token}})
+	err = databaseClient.RedisClient.Set(context.Background(), token, newUser.Id.String(), 0).Err()
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
 	}
@@ -222,7 +221,7 @@ func (databaseClient Database) DeleteUser(ctx *fiber.Ctx) error {
 func (databaseClient Database) RefreshToken(ctx *fiber.Ctx) error {
 
 	type tokenRequest struct {
-		RefreshToken string `json:"refreshToken"`
+		RefreshToken string `json:"refreshToken" validate:"required"`
 	}
 
 	payload := tokenRequest{}
@@ -230,13 +229,14 @@ func (databaseClient Database) RefreshToken(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
 	}
+	errors := utils.ValidateStruct(payload)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+	}
 
-	// Find refresh token in db
-	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
-	filter := bson.M{"token": payload.RefreshToken}
-
-	count, err := userCollection.CountDocuments(context.TODO(), filter)
-	if count == 0 || err != nil {
+	// Find refresh token in redis
+	_, err := databaseClient.RedisClient.Get(context.Background(), payload.RefreshToken).Result()
+	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "refreshToken not found"})
 	}
 
@@ -300,7 +300,7 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 	}
 
 	// Update refreshToken in user document
-	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"email": findUser.Email}, bson.M{"$set": bson.M{"token": token}})
+	err = databaseClient.RedisClient.Set(context.Background(), token, findUser.Id.String(), 0).Err()
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
 	}
@@ -310,20 +310,27 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 
 func (databaseClient Database) LogoutUser(ctx *fiber.Ctx) error {
 
-	// Get current user from the response header
-	user := ctx.GetRespHeader("currentUser")
-	id, err := primitive.ObjectIDFromHex(user)
-
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+	type tokenRequest struct {
+		RefreshToken string `json:"refreshToken" validate:"required"`
 	}
 
-	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	payload := tokenRequest{}
+	// Get refreshToken from request
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
+	}
+	errors := utils.ValidateStruct(payload)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+	}
 
-	// Update refreshToken in user document
-	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"_id": id}, bson.M{"$set": bson.M{"token": nil}})
+	// Delete refresh token in redis
+	_, err := databaseClient.RedisClient.Del(context.Background(), payload.RefreshToken).Result()
+
+	fmt.Println(err)
+
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not logout user"})
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "User logged out succesfully"})
@@ -490,7 +497,7 @@ func (databaseClient Database) ForgotPasswordMail(ctx *fiber.Ctx) error {
 	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email not found"})
 	}
-	
+
 	// Generate OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
