@@ -15,7 +15,7 @@ type Team struct {
 	ProjectId        primitive.ObjectID   `bson:"projectId,omitempty"`
 	ProjectExists    bool                 `json:"projectExists,omitempty"`
 	InvitedTeammates []primitive.ObjectID `json:"invitedTeammates,omitempty"`
-	Round            string               `json:"round,omitempty"`
+	Round            int                  `json:"round,omitempty"`
 	IsFinalised      bool                 `json:"isFinalised,omitempty"`
 	InviteCode       string               `bson:"inviteCode" json:"inviteCode,omitempty"`
 	CreatedAt        time.Time            `json:"createdTime"`
