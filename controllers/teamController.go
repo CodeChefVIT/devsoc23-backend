@@ -53,7 +53,7 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
 	now := time.Now()
-	round := "1st round"
+	round := 1
 	inviteCode := helper.RandSeq(6)
 
 	newTeam := models.Team{
@@ -415,4 +415,80 @@ func (databaseClient Database) LeaveTeam(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": result, "team message": res})
+}
+
+func (databaseClient Database) PromoteTeam(ctx *fiber.Ctx) error {
+
+	teamId := ctx.Params("teamId")
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+
+	findTeam := models.Team{}
+	filterTeam := bson.M{"_id": teamId}
+
+	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
+
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
+	}
+
+	updateTeam := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "round", Value: findTeam.Round + 1}}},
+	}
+
+	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": teamId}, updateTeam)
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": errr})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
+}
+
+func (databaseClient Database) FinaliseTeam(ctx *fiber.Ctx) error {
+
+	teamId := ctx.Params("teamId")
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+
+	findTeam := models.Team{}
+	filterTeam := bson.M{"_id": teamId}
+
+	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
+
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
+	}
+
+	updateTeam := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "isFinalised", Value: true}}},
+	}
+
+	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": teamId}, updateTeam)
+
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": errr})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
+}
+
+func (databaseClient Database) DisqualifyTeam(ctx *fiber.Ctx) error {
+
+	teamId := ctx.Params("teamId")
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+
+	findTeam := models.Team{}
+	filterTeam := bson.M{"_id": teamId}
+
+	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
+
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
+	}
+
+	updateTeam := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "round", Value: 0}}},
+	}
+
+	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": teamId}, updateTeam)
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": errr})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
 }
