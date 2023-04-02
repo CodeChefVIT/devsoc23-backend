@@ -86,6 +86,7 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 	//inserting project:
 	projectCollection := databaseClient.MongoClient.Database("devsoc").Collection("projects")
 	status := "Under Review"
+	count := 0
 	newProject := models.Project{
 		Id:                 primitive.NewObjectID(),
 		TeamId:             team_id,
@@ -97,6 +98,7 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 		ProjectTrack:       payload.ProjectTrack,
 		ProjectTags:        payload.ProjectTags,
 		IsFinal:            false,
+		LikeCount:          count,
 	}
 
 	result, err := projectCollection.InsertOne(context.TODO(), newProject)
@@ -295,4 +297,29 @@ func (databaseClient Database) GetProjects(ctx *fiber.Ctx) error {
 		return err
 	}
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "projects": projects})
+}
+
+func (databaseClient Database) LikeProject(ctx *fiber.Ctx) error {
+	var projectCollection = databaseClient.MongoClient.Database("devsoc").Collection("projects")
+	// var projects []models.Project
+
+	prjId := ctx.Params("projectId")
+
+	findProject := models.Project{}
+	projectFilter := bson.M{"_id": prjId}
+
+	err := projectCollection.FindOne(context.TODO(), projectFilter).Decode(&findProject)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Project not found"})
+	}
+	newCount := findProject.LikeCount + 1
+	projectUpdate := bson.M{"$set": bson.M{"like": newCount}}
+	projectRes, err := projectCollection.UpdateOne(context.Background(), projectFilter, projectUpdate)
+	if err != nil {
+		return err
+	}
+	fmt.Println(projectRes)
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "+1 liked"})
 }

@@ -15,6 +15,7 @@ type Project struct {
 	ProjectTrack       *string            `json:"projectTrack"`
 	ProjectTags        []string           `json:"projectTags"`
 	IsFinal            bool               `json:"isFinal,omitempty"`
+	LikeCount          int                `json:"like"`
 }
 
 type CreateProjectRequest struct {
