@@ -18,6 +18,7 @@ func TeamRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	teamGroup.Get("/members/:teamId", h.GetTeamMembers)
 	teamGroup.Post("/:teamId", h.UpdateTeam)
 	teamGroup.Delete("/:teamId", h.DeleteTeam)
+	teamGroup.Get("/")
 
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
 	adminGroup.Patch("/promote/:teamId", h.PromoteTeam)
