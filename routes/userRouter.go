@@ -27,7 +27,6 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	userGroup.Get("/me", h.FindUser)
 
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
-	adminGroup.Patch("/checkin", h.CheckIn)
-	adminGroup.Patch("/checkout", h.CheckOut)
-
+	adminGroup.Patch("/checkin/:userId", h.CheckIn)
+	adminGroup.Patch("/checkout/:userId", h.CheckOut)
 }

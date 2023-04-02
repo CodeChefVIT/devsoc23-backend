@@ -15,30 +15,18 @@ func (databaseClient Database) CheckIn(ctx *fiber.Ctx) error {
 	statusCollection := databaseClient.MongoClient.Database("devsoc").Collection("status")
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("user")
 
-	email := ctx.GetRespHeader("currentUser")
-
-	if email == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
-	}
-
-	findUser := models.User{}
-	filter := bson.M{"email": email}
-
-	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
-
+	userId := ctx.Params("userId")
+	userid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+		panic(err)
 	}
+	findUser := models.Status{}
 
-	userid := findUser.Id
-	findStatus := models.Status{}
-	filterStatus := bson.M{"userId": userid}
-
-	errr := statusCollection.FindOne(context.TODO(), filterStatus).Decode(&findStatus)
+	errr := statusCollection.FindOne(context.TODO(), userId).Decode(&findUser)
 	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User status not found"})
 	}
-	if !findStatus.InHall {
+	if !findUser.InHall {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "user is already checkedout"})
 	}
 	teamid := findUser.TeamId
@@ -76,35 +64,22 @@ func (databaseClient Database) CheckOut(ctx *fiber.Ctx) error {
 	statusCollection := databaseClient.MongoClient.Database("devsoc").Collection("status")
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("user")
 
-	email := ctx.GetRespHeader("currentUser")
-
-	if email == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
-	}
-
-	findUser := models.User{}
-	filter := bson.M{"email": email}
-
-	err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
-
+	userId := ctx.Params("userId")
+	userid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+		panic(err)
 	}
+	findUser := models.Status{}
 
-	userid := findUser.Id
-	findStatus := models.Status{}
-	filterStatus := bson.M{"userId": userid}
-
-	errr := statusCollection.FindOne(context.TODO(), filterStatus).Decode(&findStatus)
+	errr := statusCollection.FindOne(context.TODO(), userid).Decode(&findUser)
 	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User status not found"})
 	}
-	if !findStatus.InHall {
+	if !findUser.InHall {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "user is already checkedout"})
 	}
 
 	teamid := findUser.TeamId
-	// fmt.Println(findUser.Id)
 	now := time.Now()
 	t := now.Format("2006-01-02 15:04:05")
 	status := "checkOut"
@@ -122,7 +97,7 @@ func (databaseClient Database) CheckOut(ctx *fiber.Ctx) error {
 	newStatus.Time.IsTime = t
 	newStatus.Time.IfStatus = status
 
-	statusRes, err := statusCollection.UpdateByID(context.TODO(), userid, newStatus)
+	statusRes, err := userCollection.UpdateByID(context.TODO(), userid, newStatus)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
 	}
