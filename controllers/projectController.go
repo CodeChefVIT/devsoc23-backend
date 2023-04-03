@@ -306,14 +306,23 @@ func (databaseClient Database) LikeProject(ctx *fiber.Ctx) error {
 	prjId := ctx.Params("projectId")
 
 	findProject := models.Project{}
+	findTeam := models.Team{}
 	projectFilter := bson.M{"_id": prjId}
 
 	err := projectCollection.FindOne(context.TODO(), projectFilter).Decode(&findProject)
-
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Project not found"})
 	}
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+	teamFilter := bson.M{"_id": findProject.TeamId}
+	err = teamCollection.FindOne(context.TODO(), teamFilter).Decode(&findTeam)
+	if findTeam.Round > 3 {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "fail", "err": "Team project is not in 3rd round to vote"})
+	}
 	newCount := findProject.LikeCount + 1
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Project not found"})
+	}
 	projectUpdate := bson.M{"$set": bson.M{"like": newCount}}
 	projectRes, err := projectCollection.UpdateOne(context.Background(), projectFilter, projectUpdate)
 	if err != nil {
