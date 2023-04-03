@@ -5,17 +5,18 @@ import (
 )
 
 type Project struct {
-	Id                 primitive.ObjectID `bson:"_id"`
-	TeamId             *string            `bson:"teamId"`
-	ProjectName        *string            `json:"projectName"`
-	ProjectDescription *string            `json:"projectDescription"`
-	ProjectStatus      *string            `json:"projectStatus,omitempty"`
-	ProjectVideoLink   *string            `json:"projectVideoLink"`
-	ProjectGithubLink  *string            `json:"projectGithubLink"`
-	ProjectTrack       *string            `json:"projectTrack"`
-	ProjectTags        []string           `json:"projectTags"`
-	IsFinal            bool               `json:"isFinal,omitempty"`
-	LikeCount          int                `json:"like"`
+	Id                 primitive.ObjectID   `bson:"_id"`
+	TeamId             *string              `bson:"teamId"`
+	ProjectName        *string              `json:"projectName"`
+	ProjectDescription *string              `json:"projectDescription"`
+	ProjectStatus      *string              `json:"projectStatus,omitempty"`
+	ProjectVideoLink   *string              `json:"projectVideoLink"`
+	ProjectGithubLink  *string              `json:"projectGithubLink"`
+	ProjectTrack       *string              `json:"projectTrack"`
+	ProjectTags        []string             `json:"projectTags"`
+	IsFinal            bool                 `json:"isFinal,omitempty"`
+	LikeCount          int                  `json:"like"`
+	LikesId            []primitive.ObjectID `json:"likesId"`
 }
 
 type CreateProjectRequest struct {
