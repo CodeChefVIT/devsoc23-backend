@@ -1,41 +1,14 @@
 {
 	"info": {
-		"_postman_id": "e78b21f5-b447-4214-b1a6-e39ac04cb317",
+		"_postman_id": "9028a1c0-aa72-4f13-8f66-beba89eea904",
 		"name": "DEVSOC Backend",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "22371934"
+		"_exporter_id": "21877920"
 	},
 	"item": [
 		{
 			"name": "User",
 			"item": [
-				{
-					"name": "Update User",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"shivam1\",\n    \"lastName\": \"sharma\",\n    \"email\": \"daa@daa.com\",\n    \"password\": \"helloWorld123@\",\n    \"phoneNumber\": \"+91918136595\",\n    \"college\": \"Vellore Institute of Technology\",\n    \"collegeYear\": \"2021\",\n    \"birthDate\": \"29-12-2002\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/users/update",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"users",
-								"update"
-							]
-						}
-					},
-					"response": []
-				},
 				{
 					"name": "Find User",
 					"request": {
@@ -155,6 +128,33 @@
 					"response": []
 				},
 				{
+					"name": "Update User",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"shivam1\",\n    \"lastName\": \"sharma\",\n    \"email\": \"daa@daa.com\",\n    \"password\": \"helloWorld123@\",\n    \"phoneNumber\": \"+91918136595\",\n    \"college\": \"Vellore Institute of Technology\",\n    \"collegeYear\": \"2021\",\n    \"birthDate\": \"29-12-2002\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/users/update",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Delete",
 					"request": {
 						"method": "DELETE",
@@ -187,7 +187,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"refreshToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk3NTcxOTUsImlhdCI6MTY3OTc1MzU5NSwibmJmIjoxNjc5NzUzNTk1LCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQxZWZhYWZlMTI0ODk5NmJkYmY3YzMzIn0.chlDjBKGeX2-_1NinefLoNXVZxUOicOLnhAkgz3nYpI\"\n}",
+							"raw": "{\n    \"refreshToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODAyMDE3MDMsImlhdCI6MTY4MDE5ODEwMywibmJmIjoxNjgwMTk4MTAzLCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQyM2U4YThlZjFjMTMyYjAzNjk1MzMwIn0.V6b50NsrBErGGYQEMbS6_iKyPhq4tutbX_wzGiTgqAc\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -210,6 +210,9 @@
 				{
 					"name": "login",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -282,6 +285,299 @@
 			]
 		},
 		{
+			"name": "Project",
+			"item": [
+				{
+					"name": "create project",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"ProjectName\":        \"My Project\",\r\n\t\"ProjectDescription\": \"Some description\",\r\n\t\"ProjectVideoLink\":   \"link to video\",\r\n    \"ProjectGithubLink\":  \"link to github\",\r\n\t\"ProjectTrack\":       \"Finance\",\r\n\t\"ProjectTags\":        [\"tag1\",\"tag2\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/project/create",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"project",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all projects",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-rapidapi-host",
+								"value": "movie87.p.rapidapi.com",
+								"type": "default",
+								"disabled": true
+							},
+							{
+								"key": "x-rapidapi-key",
+								"value": "SIGN-UP-FOR-KEY",
+								"type": "default",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{url}}/project/allprojects",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"project",
+								"allprojects"
+							],
+							"query": [
+								{
+									"key": "subject",
+									"value": "Web dev",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get project by team id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-rapidapi-host",
+								"value": "movie87.p.rapidapi.com",
+								"type": "default",
+								"disabled": true
+							},
+							{
+								"key": "x-rapidapi-key",
+								"value": "SIGN-UP-FOR-KEY",
+								"type": "default",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{url}}/project/get/?teamId=641ff3697755877160e437ac",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"project",
+								"get",
+								""
+							],
+							"query": [
+								{
+									"key": "teamId",
+									"value": "641ff3697755877160e437ac"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update project",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk3ODQxNTksImlhdCI6MTY3OTc4MDU1OSwibmJmIjoxNjc5NzgwNTU5LCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQxZjZhOWQ4MTdhOGJmMWM1NzVmMDBlIn0.utg_96Nfz3hQkS00-289WMIdFF-s4hYbVDoktWs5i10",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "x-rapidapi-host",
+								"value": "movie87.p.rapidapi.com",
+								"type": "default",
+								"disabled": true
+							},
+							{
+								"key": "x-rapidapi-key",
+								"value": "SIGN-UP-FOR-KEY",
+								"type": "default",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"ProjectName\":        \"My new Project\",\r\n\t\"ProjectDescription\": \"Some new description\",\r\n\t\"ProjectVideoLink\":   \"link to new video\",\r\n    \"ProjectGithubLink\":  \"link to new github\",\r\n\t\"ProjectTrack\":       \"new Finance\",\r\n\t\"ProjectTags\":        [\"new tag1\",\"new tag2\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/project/update",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"project",
+								"update"
+							],
+							"query": [
+								{
+									"key": "subject",
+									"value": "Web dev",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get project",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk3ODI3NzYsImlhdCI6MTY3OTc3OTE3NiwibmJmIjoxNjc5Nzc5MTc2LCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQxZjRiN2I2ZDhjN2I2MDRmYjI5MzUxIn0.P6qE7Zjw1L1iaY0YXz2EV0OOkV12gWSqh-lNccpuxmw",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-rapidapi-host",
+								"value": "movie87.p.rapidapi.com",
+								"type": "default",
+								"disabled": true
+							},
+							{
+								"key": "x-rapidapi-key",
+								"value": "SIGN-UP-FOR-KEY",
+								"type": "default",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/project/get",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"project",
+								"get"
+							],
+							"query": [
+								{
+									"key": "subject",
+									"value": "Web dev",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete project",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk3ODQxNTksImlhdCI6MTY3OTc4MDU1OSwibmJmIjoxNjc5NzgwNTU5LCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQxZjZhOWQ4MTdhOGJmMWM1NzVmMDBlIn0.utg_96Nfz3hQkS00-289WMIdFF-s4hYbVDoktWs5i10",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "x-rapidapi-host",
+								"value": "movie87.p.rapidapi.com",
+								"type": "default",
+								"disabled": true
+							},
+							{
+								"key": "x-rapidapi-key",
+								"value": "SIGN-UP-FOR-KEY",
+								"type": "default",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{url}}/project/delete",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"project",
+								"delete"
+							],
+							"query": [
+								{
+									"key": "subject",
+									"value": "Web dev",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Team",
 			"item": [
 				{
@@ -291,7 +587,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n\t\"teamName\": \"heheh\"\r\n}",
+							"raw": "{\r\n    \"teamName\": \"hehez\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -310,6 +606,450 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "get teams",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8000/team/all",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"team",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get team members",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/team/members/6425c01076972331feedcecf",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"team",
+								"members",
+								"6425c01076972331feedcecf"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get team",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/team/get/6425c01076972331feedcecf",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"team",
+								"get",
+								"6425c01076972331feedcecf"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"teamName\": \"hehe2\",\n    \"ProjectId\": \"000000000000000000100000\",\n    \"round\": 2,\n    \"isfinalised\": true,\n    \"inviteCode\": \"QWERTY\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/team/6425c01076972331feedcecf",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"team",
+								"6425c01076972331feedcecf"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "join team",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/team/join/641fe6896ce336145b974209/RPqqpp",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"team",
+								"join",
+								"641fe6896ce336145b974209",
+								"RPqqpp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "leave team",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/team/leave",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"team",
+								"leave"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete team",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/team/6425c01076972331feedcecf",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"team",
+								"6425c01076972331feedcecf"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "promote team",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/admin/promote/{{teamId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"admin",
+								"promote",
+								"{{teamId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "finalise team",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/admin/finalise/{{teamId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"admin",
+								"finalise",
+								"{{teamId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "disqualify team",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/admin/disqualify/{{teamId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"admin",
+								"disqualify",
+								"{{teamId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "checkIn User",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/admin/checkin/{{userId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"admin",
+								"checkin",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CheckOut user",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/admin/checkout/{{userId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"admin",
+								"checkout",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "admin token only",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Voters",
+			"item": [
+				{
+					"name": "New Vote",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/project/like/642ad29ef26f5b1114b109d9",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"project",
+								"like",
+								"642ad29ef26f5b1114b109d9"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "TImeline",
+			"item": [
+				{
+					"name": "Create Timeline",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"FirstName\": \"shivam\",\n    \"lastName\": \"sharma\",\n    \"email\": \"daaa@daa.com\",\n    \"password\": \"helloWorld123@\",\n    \"phoneNumber\": \"+91918136595\",\n    \"college\": \"Vellore Institute of Technology\",\n    \"collegeYear\": \"2021\",\n    \"birthDate\": \"29-12-2002\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/admin/timeline/create",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"admin",
+								"timeline",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find Timeline",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk3MTkyMDAsImlhdCI6MTY3OTcxNTYwMCwibmJmIjoxNjc5NzE1NjAwLCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQxZTZjZTIyNWY2MDI5ZmYwNTg1ODNmIn0.6zNBHzbCG9dGrlGdi1mlTG3ACQSfLonnkz4Ta5OW72E",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8000/timeline/642c36c9572fa1e19176713",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"timeline",
+								"642c36c9572fa1e19176713"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Timelines",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8000/timeline/",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"timeline",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Timeline",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk2ODgzOTgsImlhdCI6MTY3OTY4NDc5OCwibmJmIjoxNjc5Njg0Nzk4LCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQxY2ExYzY2Y2RiZWJkN2IwYjkwNDE4In0.lKZiyxLHzYdqVxXA3zKiYtEp4fatx_J5QFWzZRFVr-s",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8000/users/delete",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"users",
+								"delete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Timeline",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODA2MjIzOTAsImlhdCI6MTY4MDYxODc5MCwibmJmIjoxNjgwNjE4NzkwLCJyb2xlIjoiQURNSU4iLCJzdWIiOiI2NDJjMjkxMWZkYzQ0YWRjOGZhOTM1ZjMifQ.qITWFm_uOZQHnsVskYzpPfG-wzHBmesCv6mvXxPQvyo",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Round 2\",\n    \"subTitle\": \"ALpha\",\n    \"description\": \"Beta\",\n    \"startTime\": \"10 am\",\n    \"endTime\": \"2 pm\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8000/admin/timeline/642c35faa6b12835c994d453",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"admin",
+								"timeline",
+								"642c35faa6b12835c994d453"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}
@@ -319,7 +1059,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk3NTc1NDUsImlhdCI6MTY3OTc1Mzk0NSwibmJmIjoxNjc5NzUzOTQ1LCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQxZjAyYmZlNmY4YzRhNjk4MTU1OTE1In0.bdJk5L08D4T9U_EFtWpbD1orWoug2SDjzOoELCybTu4",
+				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODAyMDE3MTcsImlhdCI6MTY4MDE5ODExNywibmJmIjoxNjgwMTk4MTE3LCJyb2xlIjoiSEFDS0VSIiwic3ViIjoiNjQyM2U4YThlZjFjMTMyYjAzNjk1MzMwIn0.J8PdtOrIAnH91xYSf1xFuEMihEl8PRcS_fZk7DahJ1A",
 				"type": "string"
 			}
 		]
