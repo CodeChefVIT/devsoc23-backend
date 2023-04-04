@@ -86,6 +86,7 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 	//inserting project:
 	projectCollection := databaseClient.MongoClient.Database("devsoc").Collection("projects")
 	status := "Under Review"
+	count := 0
 	newProject := models.Project{
 		Id:                 primitive.NewObjectID(),
 		TeamId:             team_id,
@@ -97,6 +98,8 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 		ProjectTrack:       payload.ProjectTrack,
 		ProjectTags:        payload.ProjectTags,
 		IsFinal:            false,
+		LikeCount:          count,
+		LikesId:            nil,
 	}
 
 	result, err := projectCollection.InsertOne(context.TODO(), newProject)
@@ -295,4 +298,70 @@ func (databaseClient Database) GetProjects(ctx *fiber.Ctx) error {
 		return err
 	}
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "projects": projects})
+}
+
+func (databaseClient Database) LikeProject(ctx *fiber.Ctx) error {
+	idString := ctx.GetRespHeader("currentUser")
+
+	if idString == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "No Id passed"})
+	}
+
+	userId, err := primitive.ObjectIDFromHex(idString)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User ID not parsable"})
+	}
+	var projectCollection = databaseClient.MongoClient.Database("devsoc").Collection("projects")
+	// var projects []models.Project
+
+	projectId := ctx.Params("projectId")
+
+	findProject := models.Project{}
+	findTeam := models.Team{}
+	prjId, err := primitive.ObjectIDFromHex(projectId)
+
+	projectFilter := bson.M{"_id": prjId}
+
+	err = projectCollection.FindOne(context.TODO(), projectFilter).Decode(&findProject)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Project not found"})
+	}
+	likedUser := false
+	for i := 0; i < findProject.LikeCount; i++ {
+		if userId == findProject.LikesId[i] {
+			likedUser = true
+			fmt.Println("hehe", findProject.LikesId[i])
+		}
+	}
+	if likedUser {
+		newDCount := findProject.LikeCount - 1
+		projectDUpdate := bson.M{"$set": bson.M{"likecount": newDCount}, "$pull": bson.M{"likesid": userId}}
+		projectDRes, err := projectCollection.UpdateOne(context.Background(), projectFilter, projectDUpdate)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "failed to dislike"})
+		}
+		fmt.Print(projectDRes)
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "you already liked:: so -1 dislike"})
+	}
+
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+	teamid := *findProject.TeamId
+	teammid, err := primitive.ObjectIDFromHex(teamid)
+	teamFilter := bson.M{"_id": teammid}
+	err = teamCollection.FindOne(context.TODO(), teamFilter).Decode(&findTeam)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "failed to get team"})
+	}
+	if findTeam.Round < 3 {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "fail", "err": "Team project is not in 3rd round to vote"})
+	}
+	newCount := findProject.LikeCount + 1
+	projectUpdate := bson.M{"$set": bson.M{"likecount": newCount}, "$push": bson.M{"likesid": userId}}
+	projectRes, err := projectCollection.UpdateOne(context.Background(), projectFilter, projectUpdate)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "failed to like"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "+1 liked", "doc": projectRes})
 }

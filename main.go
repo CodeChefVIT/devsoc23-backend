@@ -37,6 +37,7 @@ func main() {
 	routes.UserRoutes(app, &handler)
 	routes.TeamRoutes(app, &handler)
 	routes.ProjectRoutes(app, &handler)
+	routes.TimelineRoutes(app, &handler)
 	err := app.Listen(":8000")
 	if err != nil {
 		panic(err)
