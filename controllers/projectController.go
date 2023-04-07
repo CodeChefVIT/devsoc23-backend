@@ -93,6 +93,8 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 		ProjectName:        payload.ProjectName,
 		ProjectDescription: payload.ProjectDescription,
 		ProjectStatus:      &status,
+		ProjectTagLine:     payload.ProjectTagLine,
+		ProjectStack:       payload.ProjectStack,
 		ProjectVideoLink:   payload.ProjectVideoLink,
 		ProjectGithubLink:  payload.ProjectGithubLink,
 		ProjectTrack:       payload.ProjectTrack,
@@ -185,6 +187,8 @@ func (databaseClient Database) UpdateProject(ctx *fiber.Ctx) error {
 	project_update := bson.M{"$set": bson.M{
 		"projectname":        payload.ProjectName,
 		"projectdescription": payload.ProjectDescription,
+		"projectTagLine":     payload.ProjectTagLine,
+		"projectStack":       payload.ProjectStack,
 		"projectvideolink":   payload.ProjectVideoLink,
 		"projectgithublink":  payload.ProjectGithubLink,
 		"projecttrack":       payload.ProjectTrack,
