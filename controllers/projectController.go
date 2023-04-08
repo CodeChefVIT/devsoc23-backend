@@ -47,7 +47,7 @@ func (databaseClient Database) GetTeamIdByUserId(ctx *fiber.Ctx) *string {
 	return team_id
 }
 
-func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
+func (databaseClient Database) CreateProjectIdea(ctx *fiber.Ctx) error {
 
 	team_id := databaseClient.GetTeamIdByUserId(ctx)
 	id_message := *team_id
@@ -57,7 +57,7 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 	}
 	fmt.Println("team id is: ", *team_id)
 	//validating request
-	var payload *models.CreateProjectRequest
+	var payload *models.CreateProjectIdeaRequest
 
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
@@ -92,11 +92,10 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 		TeamId:             team_id,
 		ProjectName:        payload.ProjectName,
 		ProjectDescription: payload.ProjectDescription,
-		ProjectStatus:      &status,
-		ProjectVideoLink:   payload.ProjectVideoLink,
-		ProjectGithubLink:  payload.ProjectGithubLink,
+		ProjectDriveLink:   payload.ProjectDriveLink,
+		ProjectFigmaLink:   payload.ProjectFigmaLink,
 		ProjectTrack:       payload.ProjectTrack,
-		ProjectTags:        payload.ProjectTags,
+		ProjectStatus:      &status,
 		IsFinal:            false,
 		LikeCount:          count,
 		LikesId:            nil,
@@ -119,6 +118,83 @@ func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "project": result})
 }
+
+// func (databaseClient Database) CreateProject(ctx *fiber.Ctx) error {
+
+// 	team_id := databaseClient.GetTeamIdByUserId(ctx)
+// 	id_message := *team_id
+// 	if id_message == "ID does not exist" || id_message == "User id not parseable" || id_message == "user not found" || id_message == "user not in a team" {
+// 		fmt.Println("error: ", *team_id)
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": *team_id})
+// 	}
+// 	fmt.Println("team id is: ", *team_id)
+// 	//validating request
+// 	var payload *models.CreateProjectRequest
+
+// 	if err := ctx.BodyParser(&payload); err != nil {
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+// 	}
+
+// 	errors := utils.ValidateStruct(payload)
+// 	if errors != nil {
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+// 	}
+
+// 	//checking if project is there
+// 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+// 	team_objectid, err := primitive.ObjectIDFromHex(*team_id)
+// 	if err != nil {
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+// 	}
+// 	team_filter := bson.M{"_id": team_objectid}
+// 	find_team := models.Team{}
+// 	if err := teamCollection.FindOne(context.TODO(), team_filter).Decode(&find_team); err != nil {
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+// 	}
+// 	fmt.Println("Projectid: ", find_team.ProjectId)
+// 	if find_team.ProjectExists {
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "project already exists"})
+// 	}
+// 	//inserting project:
+// 	projectCollection := databaseClient.MongoClient.Database("devsoc").Collection("projects")
+// 	status := "Under Review"
+// 	count := 0
+// 	newProject := models.Project{
+// 		Id:                 primitive.NewObjectID(),
+// 		TeamId:             team_id,
+// 		ProjectName:        payload.ProjectName,
+// 		ProjectDescription: payload.ProjectDescription,
+// 		ProjectStatus:      &status,
+// 		ProjectTagLine:     payload.ProjectTagLine,
+// 		ProjectStack:       payload.ProjectStack,
+// 		ProjectVideoLink:   payload.ProjectVideoLink,
+// 		ProjectGithubLink:  payload.ProjectGithubLink,
+// 		ProjectDriveLink:   payload.ProjectDriveLink,
+// 		ProjectFigmaLink:   payload.ProjectFigmaLink,
+// 		ProjectTrack:       payload.ProjectTrack,
+// 		ProjectTags:        payload.ProjectTags,
+// 		IsFinal:            false,
+// 		LikeCount:          count,
+// 		LikesId:            nil,
+// 	}
+
+// 	result, err := projectCollection.InsertOne(context.TODO(), newProject)
+
+// 	if err != nil {
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+// 	}
+// 	fmt.Println("Inserted")
+
+// 	//updating project id in team:
+// 	team_update := bson.M{"$set": bson.M{"projectId": newProject.Id, "projectExists": true}}
+// 	team_result, err := teamCollection.UpdateOne(context.Background(), team_filter, team_update)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	fmt.Println(team_result)
+
+// 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "project": result})
+// }
 
 func (databaseClient Database) GetProjectByUserid(ctx *fiber.Ctx) error {
 
@@ -185,8 +261,12 @@ func (databaseClient Database) UpdateProject(ctx *fiber.Ctx) error {
 	project_update := bson.M{"$set": bson.M{
 		"projectname":        payload.ProjectName,
 		"projectdescription": payload.ProjectDescription,
+		"projecttagline":     payload.ProjectTagLine,
+		"projectstack":       payload.ProjectStack,
 		"projectvideolink":   payload.ProjectVideoLink,
 		"projectgithublink":  payload.ProjectGithubLink,
+		"projectdrivelink":   payload.ProjectDriveLink,
+		"projectfigmalink":   payload.ProjectFigmaLink,
 		"projecttrack":       payload.ProjectTrack,
 		"projecttags":        payload.ProjectTags,
 	}}

@@ -10,7 +10,8 @@ import (
 func ProjectRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 
 	projectGroup := incomingRoutes.Group("/project", middleware.VerifyToken)
-	projectGroup.Post("/create", h.CreateProject)
+	projectGroup.Post("/idea",h.CreateProjectIdea)
+	// projectGroup.Post("/create", h.CreateProject)
 	projectGroup.Get("/get", h.GetProjectByUserid)
 	projectGroup.Get("/get/:teamId", h.GetProjectByTeamid)
 	projectGroup.Patch("/update", h.UpdateProject)

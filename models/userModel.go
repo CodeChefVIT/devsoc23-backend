@@ -14,8 +14,11 @@ type User struct {
 	Password     *string            `json:"password" validate:"required,min=8,max=64"`
 	PhoneNumber  *string            `json:"phoneNumber" validate:"required,e164,min=10,max=13"`
 	Token        *string            `json:"token,omitempty"`
+	Bio          *string            `json:"bio,omitempty"`
+	Gender       *string            `json:"gender,omitempty"`
 	UserRole     string             `json:"userRole" default:"HACKER" validate:"eq=ADMIN|eq=HACKER|eq=VOTER"`
 	ProfilePhoto *string            `json:"profilePhoto,omitempty"`
+	RegNo        *string            `json:"redNo,omitempty"`
 	College      *string            `json:"college,omitempty" validate:"min=10,max=128"`
 	CollegeYear  *string            `json:"collegeYear,omitempty"`
 	BirthDate    *string            `json:"birthData,omitempty"`
@@ -42,6 +45,9 @@ type UpdateUserRequest struct {
 	ProfilePhoto *string   `json:"profilePhoto,omitempty"`
 	College      *string   `json:"college,omitempty" validate:"min=10,max=128"`
 	CollegeYear  *string   `json:"collegeYear,omitempty"`
+	Bio          *string   `json:"bio,omitempty"`
+	RegNo        *string   `json:"redNo,omitempty"`
+	Gender       *string   `json:"gender,omitempty"`
 	BirthDate    *string   `json:"birthData,omitempty"`
 	VerifyOtp    *string   `json:"verifyOtp,omitempty"`
 	Address      *string   `json:"address,omitempty"`
@@ -63,8 +69,11 @@ type CreateUserRequest struct {
 	Email       *string            `json:"email" validate:"required,email"`
 	Password    *string            `json:"password" validate:"required,min=8,max=64"`
 	PhoneNumber *string            `json:"phoneNumber" validate:"required,e164,min=10,max=13"`
+	RegNo       *string            `json:"redNo,omitempty"`
 	College     *string            `json:"college,omitempty" validate:"min=10,max=128"`
 	CollegeYear *string            `json:"collegeYear,omitempty"`
+	Bio         *string            `json:"bio,omitempty"`
+	Gender      *string            `json:"gender,omitempty"`
 	BirthDate   *string            `json:"birthDate,omitempty"`
 	IsActive    bool               `json:"isActive,omitempty"`
 	IsVerify    bool               `json:"isVerify,omitempty"`
