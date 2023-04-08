@@ -12,7 +12,7 @@ import (
 )
 
 func NewDatabase() controller.Database {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://mongo:27017"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:password@mongo:27017/devsoc?authSource=admin"))
 	if err != nil {
 		panic(err.Error())
 	}
