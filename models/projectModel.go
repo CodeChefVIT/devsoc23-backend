@@ -25,8 +25,12 @@ type Project struct {
 	LikesId            []primitive.ObjectID `json:"likesId"`
 }
 type CreateProjectIdeaRequest struct {
-	Idea     *string `json:"idea"`
-	IdeaLink *string `json:"ideaLink"`
+
+	ProjectName        *string `json:"projectName"`
+	ProjectDescription *string `json:"projectDescription"`
+	ProjectDriveLink   *string `json:"projectDriveLink"`
+	ProjectFigmaLink   *string `json:"projectFigmaLink"`
+	ProjectTrack       *string `json:"projectTrack"`
 }
 
 type CreateProjectRequest struct {
