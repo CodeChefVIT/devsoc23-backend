@@ -88,14 +88,17 @@ func (databaseClient Database) CreateProjectIdea(ctx *fiber.Ctx) error {
 	status := "Under Review"
 	count := 0
 	newProject := models.Project{
-		Id:            primitive.NewObjectID(),
-		TeamId:        team_id,
-		Idea:          payload.Idea,
-		IdeaLink:      payload.IdeaLink,
-		ProjectStatus: &status,
-		IsFinal:       false,
-		LikeCount:     count,
-		LikesId:       nil,
+		Id:                 primitive.NewObjectID(),
+		TeamId:             team_id,
+		ProjectName:        payload.ProjectName,
+		ProjectDescription: payload.ProjectDescription,
+		ProjectDriveLink:   payload.ProjectDriveLink,
+		ProjectFigmaLink:   payload.ProjectFigmaLink,
+		ProjectTrack:       payload.ProjectTrack,
+		ProjectStatus:      &status,
+		IsFinal:            false,
+		LikeCount:          count,
+		LikesId:            nil,
 	}
 
 	result, err := projectCollection.InsertOne(context.TODO(), newProject)
