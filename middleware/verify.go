@@ -19,7 +19,7 @@ func VerifyToken(ctx *fiber.Ctx) error {
 	authorizationHeader := ctx.Get("Authorization")
 	fields := strings.Fields(authorizationHeader)
 
-	if len(fields) != 0 && fields[0] == "Bearer" {
+	if len(fields) > 1 && fields[0] == "Bearer" {
 		token = fields[1]
 	}
 
@@ -55,7 +55,7 @@ func VerfiyAdmin(ctx *fiber.Ctx) error {
 	authorizationHeader := ctx.Get("Authorization")
 	fields := strings.Fields(authorizationHeader)
 
-	if len(fields) != 0 && fields[0] == "Bearer" {
+	if len(fields) > 1 && fields[0] == "Bearer" {
 		token = fields[1]
 	}
 
@@ -95,7 +95,7 @@ func VerifyBoard(ctx *fiber.Ctx) error {
 	authorizationHeader := ctx.Get("Authorization")
 	fields := strings.Fields(authorizationHeader)
 
-	if len(fields) != 0 && fields[0] == "Bearer" {
+	if len(fields) > 1 && fields[0] == "Bearer" {
 		token = fields[1]
 	}
 
@@ -131,4 +131,3 @@ func VerifyBoard(ctx *fiber.Ctx) error {
 	ctx.Set("currentUser", user.Id.Hex())
 	return ctx.Next()
 }
-
