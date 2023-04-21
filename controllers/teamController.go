@@ -276,7 +276,7 @@ func (databaseClient Database) DeleteTeam(ctx *fiber.Ctx) error {
 
 	filterUser := bson.M{"teamid": delTeam.Id}
 
-	updateUserInTeam := bson.M{"$set": bson.M{"inteam": false}}
+	updateUserInTeam := bson.M{"$set": bson.M{"inteam": false, "teamid": ""}}
 
 	_, err = userCollection.UpdateMany(context.TODO(), filterUser, updateUserInTeam)
 	if err != nil {
@@ -414,8 +414,31 @@ func (databaseClient Database) LeaveTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
 	}
 
+	// if id == findTeam.TeamLeaderId {
+	// 	return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "teamleader cannot leave team"})
+	// }
+
 	if id == findTeam.TeamLeaderId {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "teamleader cannot leave team"})
+		// leader trying to remove himself
+		// delete the team itself
+		// return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Leader cannot exit the team"})
+		delFilter := bson.M{"_id": teamId}
+		result, err := teamCollection.DeleteOne(context.TODO(), delFilter)
+
+		fmt.Println("DeleteOne Result:", reflect.TypeOf(result))
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not deleted"})
+		}
+
+		filterUser := bson.M{"teamid": teamId}
+		updateUserInTeam := bson.M{"$set": bson.M{"inteam": false, "teamid": ""}}
+		// userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+		_, err = userCollection.UpdateMany(context.TODO(), filterUser, updateUserInTeam)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "users not found"})
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "TeamLeader left, Team deleted"})
 	}
 
 	updateTeam := bson.D{
@@ -544,6 +567,7 @@ func (databaseClient Database) RemoveMember(ctx *fiber.Ctx) error {
 	filterTeamId := bson.M{"_id": teamId}
 
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+
 	if err := teamCollection.FindOne(context.TODO(), filterTeamId).Decode(&Team); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "TeamId incorrect"})
 	}
@@ -562,7 +586,24 @@ func (databaseClient Database) RemoveMember(ctx *fiber.Ctx) error {
 	if remMemberId == leaderId {
 		// leader trying to remove himself
 		// delete the team itself
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Leader cannot exit the team"})
+		// return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Leader cannot exit the team"})
+		delFilter := bson.M{"_id": Team.Id}
+		result, err := teamCollection.DeleteOne(context.TODO(), delFilter)
+		fmt.Println("DeleteOne Result:", reflect.TypeOf(result))
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not deleted"})
+		}
+
+		filterUser := bson.M{"teamid": Team.Id}
+		updateUserInTeam := bson.M{"$set": bson.M{"inteam": false, "teamid": ""}}
+		userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+		_, err = userCollection.UpdateMany(context.TODO(), filterUser, updateUserInTeam)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "users not found"})
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Team deleted"})
+
 	}
 
 	var newTeamSize int
@@ -620,5 +661,3 @@ func (databaseClient Database) RemoveMember(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Member removed", "result1": res, "result2": result})
 
 }
-
-// team deleted when teamleader exits
