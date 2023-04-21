@@ -18,10 +18,11 @@ func TeamRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	teamGroup.Get("/members/:teamId", h.GetTeamMembers)
 	teamGroup.Post("/:teamId", h.UpdateTeam)
 	teamGroup.Delete("/:teamId", h.DeleteTeam)
-	
+	teamGroup.Patch("/remove/:teamId/:memberId", h.RemoveMember)
+
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
 	adminGroup.Patch("/promote/:teamId", h.PromoteTeam)
 	adminGroup.Patch("/finalise/:teamId", h.FinaliseTeam)
-	adminGroup.Patch("/disqualify/:teamId",h.DisqualifyTeam)
+	adminGroup.Patch("/disqualify/:teamId", h.DisqualifyTeam)
 
 }
