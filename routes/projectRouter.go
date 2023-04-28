@@ -14,7 +14,7 @@ func ProjectRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	// projectGroup.Post("/create", h.CreateProject)
 	projectGroup.Get("/get", h.GetProjectByUserid)
 	projectGroup.Get("/get/:teamId", h.GetProjectByTeamid)
-	projectGroup.Patch("/update", h.UpdateProject)
+	projectGroup.Post("/update", h.UpdateProject)
 	projectGroup.Delete("/delete", h.DeleteProject)
 	projectGroup.Post("/finalproject", h.FinaliseProjectSubmission)
 	projectGroup.Get("/status", h.GetStatus)
