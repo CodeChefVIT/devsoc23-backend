@@ -159,6 +159,28 @@ func (databaseClient Database) GetTeamMembers(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "teammembers": findTeam.TeamMembers})
 }
 
+func (databaseClient Database) GetIsMember(ctx *fiber.Ctx) error {
+
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+
+	Id := ctx.Params("memberId")
+	id, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Id not parsable"})
+	}
+
+	findUser := models.User{}
+	filter := bson.M{"_id": id}
+
+	if err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+	if findUser.InTeam {
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": true, "details": findUser})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": false})
+}
+
 func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
@@ -318,6 +340,7 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 	if findUser.InTeam {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you are already in team"})
 	}
+
 	Id := ctx.Params("teamId")
 	teamId, err := primitive.ObjectIDFromHex(Id)
 	if err != nil {
@@ -540,8 +563,6 @@ func (databaseClient Database) DisqualifyTeam(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
 }
-
-// teamleader gets to remove teammember
 
 func (databaseClient Database) RemoveMember(ctx *fiber.Ctx) error {
 
