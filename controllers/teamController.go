@@ -52,6 +52,12 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	}
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
+	filter = bson.M{"teamname": payload.TeamName}
+	count, _ := teamCollection.CountDocuments(context.TODO(), filter)
+	if count > 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Name already exists"})
+	}
+
 	now := time.Now()
 	round := 1
 	inviteCode := helper.RandSeq(6)
@@ -234,25 +240,30 @@ func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 	var setUpdates bson.D
 
 	setUpdates = append(setUpdates,
-		bson.E{"updatedat", now})
+		bson.E{Key: "updatedat", Value: now})
 
 	if payload.TeamName != nil {
-		setUpdates = append(setUpdates, bson.E{"teamname", payload.TeamName})
+		filter := bson.M{"teamname": payload.TeamName}
+		count, _ := teamCollection.CountDocuments(context.TODO(), filter)
+		if count > 0 {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Name already exists"})
+		}
+		setUpdates = append(setUpdates, bson.E{Key: "teamname", Value: payload.TeamName})
 	}
 	if payload.IsFinalised != oldTeam.IsFinalised {
-		setUpdates = append(setUpdates, bson.E{"isfinalised", payload.IsFinalised})
+		setUpdates = append(setUpdates, bson.E{Key: "isfinalised", Value: payload.IsFinalised})
 	}
 	if payload.ProjectExists != oldTeam.ProjectExists {
-		setUpdates = append(setUpdates, bson.E{"projectexists", payload.ProjectExists})
+		setUpdates = append(setUpdates, bson.E{Key: "projectexists", Value: payload.ProjectExists})
 	}
 	if payload.Round != oldTeam.Round {
-		setUpdates = append(setUpdates, bson.E{"round", payload.Round})
+		setUpdates = append(setUpdates, bson.E{Key: "round", Value: payload.Round})
 	}
 	if len(payload.InviteCode) > 0 {
-		setUpdates = append(setUpdates, bson.E{"inviteCode", payload.InviteCode})
+		setUpdates = append(setUpdates, bson.E{Key: "inviteCode", Value: payload.InviteCode})
 	}
 
-	result, err := teamCollection.UpdateOne(context.TODO(), filterTeamUpdate, bson.D{{"$set", setUpdates}})
+	result, err := teamCollection.UpdateOne(context.TODO(), filterTeamUpdate, bson.D{{Key: "$set", Value: setUpdates}})
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
