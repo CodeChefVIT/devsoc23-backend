@@ -7,7 +7,9 @@ import (
 	"devsoc23-backend/utils"
 	"fmt"
 	"log"
+	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -167,20 +169,32 @@ func (databaseClient Database) GetTeamMembers(ctx *fiber.Ctx) error {
 
 func (databaseClient Database) GetIsMember(ctx *fiber.Ctx) error {
 
-	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	authorizationHeader := ctx.Get("Authorization")
+	fields := strings.Fields(authorizationHeader)
 
-	Id := ctx.Params("memberId")
-	id, err := primitive.ObjectIDFromHex(Id)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Id not parsable"})
+	token := fields[1]
+
+	if token == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "You are not logged in"})
 	}
+
+	res, err := utils.ValidateToken(token, os.Getenv("JWT_SECRET"))
+
+	if err != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+
+	filter := bson.M{"_id": res.Id}
 
 	findUser := models.User{}
-	filter := bson.M{"_id": id}
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
-	if err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	err = userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists"})
 	}
+
 	if findUser.InTeam {
 		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": true, "details": findUser})
 	}
@@ -318,12 +332,11 @@ func (databaseClient Database) DeleteTeam(ctx *fiber.Ctx) error {
 
 	delFilter := bson.M{"_id": delTeam.Id}
 	result, err := teamCollection.DeleteOne(context.TODO(), delFilter)
-	fmt.Println("DeleteOne Result:", reflect.TypeOf(result))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not deleted"})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Team deleted"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": result})
 }
 
 func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
