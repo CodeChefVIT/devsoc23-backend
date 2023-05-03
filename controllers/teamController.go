@@ -5,10 +5,8 @@ import (
 	"devsoc23-backend/helper"
 	"devsoc23-backend/models"
 	"devsoc23-backend/utils"
-	"fmt"
 	"log"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -124,9 +122,11 @@ func (databaseClient Database) GetTeams(ctx *fiber.Ctx) error {
 
 	var teams []models.Team
 	cur, err := teamCollection.Find(context.TODO(), bson.M{})
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer cur.Close(context.Background())
 	for cur.Next(context.Background()) {
 		// To decode into a struct, use cursor.Decode()
@@ -195,10 +195,37 @@ func (databaseClient Database) GetIsMember(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists"})
 	}
 
-	if findUser.InTeam {
-		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": true, "details": findUser})
+	if !findUser.InTeam {
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": false})
 	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": false})
+	teamId, err := primitive.ObjectIDFromHex(*findUser.TeamId)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
+	}
+	var users []models.User
+	cur, err := userCollection.Find(context.TODO(), bson.M{"teamid": teamId})
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
+	}
+
+	defer cur.Close(context.Background())
+	for cur.Next(context.Background()) {
+
+		var user models.User
+		err := cur.Decode(&user)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "message": "User not decodable"})
+		}
+
+		users = append(users, user)
+
+	}
+	if err := cur.Err(); err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": true, "memberDetails": users})
 }
 
 func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
@@ -282,7 +309,6 @@ func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
-	fmt.Println(payload.Id)
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "team": result})
 }
@@ -470,9 +496,8 @@ func (databaseClient Database) LeaveTeam(ctx *fiber.Ctx) error {
 		// delete the team itself
 		// return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Leader cannot exit the team"})
 		delFilter := bson.M{"_id": teamId}
-		result, err := teamCollection.DeleteOne(context.TODO(), delFilter)
+		_, err := teamCollection.DeleteOne(context.TODO(), delFilter)
 
-		fmt.Println("DeleteOne Result:", reflect.TypeOf(result))
 		if err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not deleted"})
 		}
@@ -633,8 +658,8 @@ func (databaseClient Database) RemoveMember(ctx *fiber.Ctx) error {
 		// delete the team itself
 		// return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Leader cannot exit the team"})
 		delFilter := bson.M{"_id": Team.Id}
-		result, err := teamCollection.DeleteOne(context.TODO(), delFilter)
-		fmt.Println("DeleteOne Result:", reflect.TypeOf(result))
+		_, err := teamCollection.DeleteOne(context.TODO(), delFilter)
+
 		if err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not deleted"})
 		}
