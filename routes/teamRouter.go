@@ -16,7 +16,8 @@ func TeamRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	teamGroup.Get("/get/:teamId", h.GetTeam)
 	teamGroup.Get("/all", h.GetTeams)
 	teamGroup.Get("/members/:teamId", h.GetTeamMembers)
-	teamGroup.Post("/:teamId", h.UpdateTeam)
+	teamGroup.Get("/ismember/:memberId", h.GetIsMember)
+	teamGroup.Patch("/:teamId", h.UpdateTeam)
 	teamGroup.Delete("/:teamId", h.DeleteTeam)
 	teamGroup.Patch("/remove/:teamId/:memberId", h.RemoveMember)
 

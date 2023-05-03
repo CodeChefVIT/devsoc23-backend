@@ -52,6 +52,12 @@ func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	}
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
+	filter = bson.M{"teamname": payload.TeamName}
+	count, _ := teamCollection.CountDocuments(context.TODO(), filter)
+	if count > 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Name already exists"})
+	}
+
 	now := time.Now()
 	round := 1
 	inviteCode := helper.RandSeq(6)
@@ -159,6 +165,28 @@ func (databaseClient Database) GetTeamMembers(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "teammembers": findTeam.TeamMembers})
 }
 
+func (databaseClient Database) GetIsMember(ctx *fiber.Ctx) error {
+
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+
+	Id := ctx.Params("memberId")
+	id, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Id not parsable"})
+	}
+
+	findUser := models.User{}
+	filter := bson.M{"_id": id}
+
+	if err := userCollection.FindOne(context.TODO(), filter).Decode(&findUser); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+	if findUser.InTeam {
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": true, "details": findUser})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "inTeam": false})
+}
+
 func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
@@ -212,25 +240,30 @@ func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
 	var setUpdates bson.D
 
 	setUpdates = append(setUpdates,
-		bson.E{"updatedat", now})
+		bson.E{Key: "updatedat", Value: now})
 
 	if payload.TeamName != nil {
-		setUpdates = append(setUpdates, bson.E{"teamname", payload.TeamName})
+		filter := bson.M{"teamname": payload.TeamName}
+		count, _ := teamCollection.CountDocuments(context.TODO(), filter)
+		if count > 0 {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Name already exists"})
+		}
+		setUpdates = append(setUpdates, bson.E{Key: "teamname", Value: payload.TeamName})
 	}
 	if payload.IsFinalised != oldTeam.IsFinalised {
-		setUpdates = append(setUpdates, bson.E{"isfinalised", payload.IsFinalised})
+		setUpdates = append(setUpdates, bson.E{Key: "isfinalised", Value: payload.IsFinalised})
 	}
 	if payload.ProjectExists != oldTeam.ProjectExists {
-		setUpdates = append(setUpdates, bson.E{"projectexists", payload.ProjectExists})
+		setUpdates = append(setUpdates, bson.E{Key: "projectexists", Value: payload.ProjectExists})
 	}
 	if payload.Round != oldTeam.Round {
-		setUpdates = append(setUpdates, bson.E{"round", payload.Round})
+		setUpdates = append(setUpdates, bson.E{Key: "round", Value: payload.Round})
 	}
 	if len(payload.InviteCode) > 0 {
-		setUpdates = append(setUpdates, bson.E{"inviteCode", payload.InviteCode})
+		setUpdates = append(setUpdates, bson.E{Key: "inviteCode", Value: payload.InviteCode})
 	}
 
-	result, err := teamCollection.UpdateOne(context.TODO(), filterTeamUpdate, bson.D{{"$set", setUpdates}})
+	result, err := teamCollection.UpdateOne(context.TODO(), filterTeamUpdate, bson.D{{Key: "$set", Value: setUpdates}})
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
@@ -318,6 +351,7 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 	if findUser.InTeam {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you are already in team"})
 	}
+
 	Id := ctx.Params("teamId")
 	teamId, err := primitive.ObjectIDFromHex(Id)
 	if err != nil {
@@ -540,8 +574,6 @@ func (databaseClient Database) DisqualifyTeam(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
 }
-
-// teamleader gets to remove teammember
 
 func (databaseClient Database) RemoveMember(ctx *fiber.Ctx) error {
 
