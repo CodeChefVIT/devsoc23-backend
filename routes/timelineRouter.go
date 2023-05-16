@@ -13,7 +13,7 @@ func TimelineRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
 
 	adminGroup.Post("/timeline/create", h.CreateTimeLine)
-	adminGroup.Patch("/timeline/:id", h.UpdateTimeLine)
+	adminGroup.Post("/timeline/:id", h.UpdateTimeLine)
 	adminGroup.Delete("/timeline/:id", h.DeleteTimeline)
 
 }

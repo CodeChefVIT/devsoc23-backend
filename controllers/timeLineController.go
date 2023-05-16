@@ -31,6 +31,8 @@ func (databaseClient Database) CreateTimeLine(ctx *fiber.Ctx) error {
 		Title:       payload.Title,
 		SubTitle:    payload.SubTitle,
 		Description: payload.Description,
+		Venue:       payload.Venue,
+		Date:        payload.Date,
 		StartTime:   payload.StartTime,
 		EndTime:     payload.EndTime,
 	}
@@ -116,6 +118,8 @@ func (databaseClient Database) UpdateTimeLine(ctx *fiber.Ctx) error {
 		"title":       payload.Title,
 		"subtitle":    payload.SubTitle,
 		"description": payload.Description,
+		"venue":       payload.Venue,
+		"date":        payload.Date,
 		"starttime":   payload.StartTime,
 		"endtime":     payload.EndTime,
 	}
