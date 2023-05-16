@@ -9,6 +9,8 @@ type TimeLine struct {
 	Title       *string            `json:"title" validate:"required"`
 	SubTitle    *string            `json:"subTitle"`
 	Description *string            `json:"description"`
+	Venue       *string            `json:"venue"`
+	Date        *string            `json:"date" validate:"required"`
 	StartTime   *string            `json:"startTime" validate:"required"`
 	EndTime     *string            `json:"endTime" validate:"required"`
 }
