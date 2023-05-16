@@ -202,8 +202,21 @@ func (databaseClient Database) GetIsMember(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
+
+	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+
+	findTeam := models.Team{}
+	filterTeam := bson.M{"_id": teamId}
+
+	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
+
+	if errr != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
+	}
+
 	var users []models.User
-	cur, err := userCollection.Find(context.TODO(), bson.M{"teamid": teamId})
+	opt := options.Find().SetProjection(bson.D{{Key: "password", Value: 0}})
+	cur, err := userCollection.Find(context.TODO(), bson.M{"teamid": teamId}, opt)
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
