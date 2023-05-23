@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	controller "devsoc23-backend/controllers"
+	"devsoc23-backend/initializers"
 
 	"os"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func NewDatabase() controller.Database {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:password@mongo:27017/devsoc?authSource=admin"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://pi:NHYESm3CnqsgXbXO@cluster0.nrrugif.mongodb.net/?retryWrites=true&w=majority"))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -22,13 +23,16 @@ func NewDatabase() controller.Database {
 	}
 
 	rdb := redis.NewClient(&redis.Options{
+		Username: "default", // use your Redis user. More info https://redis.io/docs/management/security/acl/
 		Addr:     os.Getenv("REDIS_DB_ADDR"),
 		Password: os.Getenv("REDIS_DB_PASS"),
-		DB:       1,
+		DB:       0,
 	})
+	s3Client := initializers.InitializeSpaces()
 	return controller.Database{
 		MongoClient: client,
 		RedisClient: rdb,
+		S3Client:    s3Client,
 	}
 
 }

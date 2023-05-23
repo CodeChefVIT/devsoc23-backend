@@ -20,5 +20,5 @@ func ProjectRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	projectGroup.Get("/status", h.GetStatus)
 	projectGroup.Get("/allprojects", h.GetProjects)
 
-	projectGroup.Patch("/like/:projectId", h.LikeProject)
+	projectGroup.Post("/like/:projectId", h.LikeProject)
 }

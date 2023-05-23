@@ -154,15 +154,22 @@ func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 
 	// Get request body and bind to payload
-	var payload *models.UpdateUserRequest
+	var payload models.UpdateUserRequest
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
 	}
 
-	// Validate Struct
-	errors := utils.ValidateStruct(payload)
-	if errors != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+	file, err := ctx.FormFile("image")
+	url := ""
+	if err == nil {
+		image := utils.PhotoForm{
+			CampaignImage: file,
+		}
+		url, uploadErr := utils.UploadPhoto(&image, databaseClient.S3Client)
+		fmt.Println(url)
+		if uploadErr != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error(), "message": "Image Upload Failed"})
+		}
 	}
 
 	// Get current user from the response header
@@ -185,9 +192,9 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 		"regno":       payload.RegNo,
 		"collegeyear": payload.CollegeYear,
 		"birthdate":   payload.BirthDate,
+		"image":       url,
 		"isactive":    false,
 		"iscanshare":  false,
-		"inteam":      false,
 		"updatedat":   time.Now(),
 	}
 
