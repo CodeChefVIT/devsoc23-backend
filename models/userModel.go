@@ -40,7 +40,7 @@ type User struct {
 }
 
 type UpdateUserRequest struct {
-	FirstName     *string               `form:"firstName" validate:"required,min=2,max=16"`
+	FirstName     *string               `form:"firstName" validate:"required,min=2,max=32"`
 	LastName      *string               `form:"lastName" validate:"min=2,max=32"`
 	Email         *string               `form:"email" validate:"required,email"`
 	PhoneNumber   *string               `form:"phoneNumber" validate:"required,e164,min=10,max=13"`
