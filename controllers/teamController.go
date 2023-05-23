@@ -5,6 +5,7 @@ import (
 	"devsoc23-backend/helper"
 	"devsoc23-backend/models"
 	"devsoc23-backend/utils"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -239,7 +240,7 @@ func (databaseClient Database) GetIsMember(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "isTeamLeader": findTeam.TeamLeaderId == findUser.Id, "inTeam": true, "memberDetails": users})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "teamId": findTeam.Id, "teamName": findTeam.TeamName, "inviteCode": findTeam.InviteCode, "inTeam": true, "memberDetails": users})
 }
 
 func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
@@ -405,17 +406,13 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you are already in team"})
 	}
 
-	Id := ctx.Params("teamId")
-	teamId, err := primitive.ObjectIDFromHex(Id)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "TeamId not parsable"})
-	}
-
 	inviteCode := ctx.Params("inviteCode")
+	fmt.Println(inviteCode)
+
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
 	findTeam := models.Team{}
-	filterTeam := bson.M{"_id": teamId}
+	filterTeam := bson.M{"inviteCode": inviteCode}
 
 	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
 
@@ -427,10 +424,6 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you cannot invite yourself for your team"})
 	}
 
-	if findTeam.InviteCode != inviteCode {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Wrong Invite Code"})
-
-	}
 	if findTeam.TeamSize == 4 {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team is full"})
 	}
@@ -440,11 +433,11 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 		{Key: "$push", Value: bson.D{{Key: "teamMembers", Value: id}}},
 	}
 
-	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": teamId}, updateTeam)
+	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": findTeam.Id}, updateTeam)
 	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Update not performed"})
 	}
-	update := bson.M{"inteam": true, "teamid": teamId}
+	update := bson.M{"inteam": true, "teamid": findTeam.Id}
 	updateUser := bson.M{
 		"$set": update,
 	}
