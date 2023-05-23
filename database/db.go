@@ -23,10 +23,9 @@ func NewDatabase() controller.Database {
 	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Username: "default", // use your Redis user. More info https://redis.io/docs/management/security/acl/
 		Addr:     os.Getenv("REDIS_DB_ADDR"),
 		Password: os.Getenv("REDIS_DB_PASS"),
-		DB:       0,
+		DB:       1,
 	})
 	s3Client := initializers.InitializeSpaces()
 	return controller.Database{
