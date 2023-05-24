@@ -94,6 +94,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 		CollegeYear: payload.CollegeYear,
 		BirthDate:   payload.BirthDate,
 		Mode:        payload.Mode,
+		Github:      payload.Github,
 		Image:       &url,
 		IsActive:    false,
 		IsVerify:    false,
@@ -121,6 +122,31 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	token, err := utils.GenerateToken(duration, sub, os.Getenv("REFRESH_JWT_SECRET"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
+	}
+
+
+	// Generate OTP
+	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+	// Store OTP in redis
+	err = databaseClient.RedisClient.Set(context.Background(), *payload.Email, otp, 0).Err()
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not set otp"})
+	}
+
+	// Send email with OTP
+	verifyUrl := "http://localhost:3000/verify?email=" + *payload.Email + "&otp=" + otp
+	subject := "Devsoc Verification"
+	body := "Please verify your Devsoc account by clinking this link: " + verifyUrl
+	err = utils.SendMail(subject, body, *payload.Email)
+
+	// Send the email
+	if err != nil {
+		// Return error if email cannot be sent
+		fmt.Println("Error reason: ", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to send OTP",
+		})
 	}
 
 	// Update refreshToken in user document
@@ -221,6 +247,7 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 		"regno":       payload.RegNo,
 		"collegeyear": payload.CollegeYear,
 		"birthdate":   payload.BirthDate,
+		"github":      payload.Github,
 		"image":       url,
 		"isactive":    false,
 		"iscanshare":  false,
@@ -321,6 +348,11 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
 	}
 
+	// Check if user is verified
+	if !findUser.IsVerify {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not verified"})
+	}
+
 	// Compare password hashes
 	match := utils.CheckPasswordHash(*payload.Password, *findUser.Password)
 
@@ -390,13 +422,17 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	// Generate OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
-	// Store OTP
-	store[email] = otp
+	// Store OTP in redis
+	err := databaseClient.RedisClient.Set(context.Background(), email, otp, 0).Err()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not set otp"})
+	}
 
 	// Send email with OTP
-	subject := "Your OTP for Devsoc verification"
-	body := "Your Devsoc verification OTP is: " + otp
-	err := utils.SendMail(subject, body, email)
+	url := "http://localhost:3000/verify?email=" + email + "&otp=" + otp
+	subject := "Devsoc Verification"
+	body := "Please verify your Devsoc account by clinking this link: " + url
+	err = utils.SendMail(subject, body, email)
 
 	// Send the email
 	if err != nil {
@@ -422,14 +458,13 @@ func (databaseClient Database) Verifyotp(c *fiber.Ctx) error {
 	}
 	email := emailotpData.Email
 	otp := emailotpData.OTP
-	// Retrieve OTP from store
-	storedOtp, ok := store[email]
-	if !ok {
-		// Return error if OTP not found for email
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "OTP not found",
-		})
+	// Retrieve OTP from redis
+	storedOtp, err := databaseClient.RedisClient.Get(context.Background(), email).Result()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
 	}
+
+	fmt.Println(storedOtp)
 
 	// Compare OTP
 	if otp != storedOtp {
@@ -439,8 +474,11 @@ func (databaseClient Database) Verifyotp(c *fiber.Ctx) error {
 		})
 	}
 
-	// Delete OTP from store
-	delete(store, email)
+	// Delete OTP from redis
+	err = databaseClient.RedisClient.Del(context.Background(), email).Err()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Failed to delete otp"})
+	}
 
 	// Return success message
 	collection := databaseClient.MongoClient.Database("devsoc").Collection("users")
@@ -451,12 +489,9 @@ func (databaseClient Database) Verifyotp(c *fiber.Ctx) error {
 	update := bson.M{"$set": bson.M{"isVerify": true}}
 
 	// Update the user record in the database
-	result, err := collection.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		return err
-	}
+	_, err = collection.UpdateOne(context.Background(), filter, update)
 
-	if result.ModifiedCount == 0 {
+	if err != nil {
 		// User not found
 		return fmt.Errorf("user with email %s not found", email)
 	}
