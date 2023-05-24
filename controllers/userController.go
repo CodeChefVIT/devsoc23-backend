@@ -55,7 +55,7 @@ func (databaseClient Database) GetUsers(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
-	var payload *models.CreateUserRequest
+	var payload models.CreateUserRequest
 
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
@@ -106,7 +106,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	result, err := userCollection.InsertOne(context.TODO(), newUser)
 
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
 	fmt.Println(result.InsertedID)
 
@@ -117,7 +117,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	}
 	token, err := utils.GenerateToken(duration, sub, os.Getenv("REFRESH_JWT_SECRET"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
 
 	// Update refreshToken in user document
@@ -152,32 +152,51 @@ func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
-
+	
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+	
 	// Get request body and bind to payload
 	var payload models.UpdateUserRequest
+	var url string
+
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
 	}
 
+	// Get current user from the response header
+	id, err := primitive.ObjectIDFromHex(ctx.GetRespHeader("currentUser"))
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email does not exist"})
+	}
+
+	findUser := models.User{}
+	filter := bson.M{"_id": id}
+
+	// Find User
+	err = userCollection.FindOne(context.TODO(), filter).Decode(&findUser)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
+	}
+
+	// Set default image url
+	url = *findUser.Image
+	fmt.Println("OLD URL: "+ url)
+
+
 	file, err := ctx.FormFile("image")
-	url := ""
 	if err == nil {
 		image := utils.PhotoForm{
 			CampaignImage: file,
 		}
-		url, uploadErr := utils.UploadPhoto(&image, databaseClient.S3Client)
-		fmt.Println(url)
+		newUrl, uploadErr := utils.UploadPhoto(&image, databaseClient.S3Client)
 		if uploadErr != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error(), "message": "Image Upload Failed"})
+		} else {
+			url = newUrl
+			fmt.Println("NEW URL GEN")
 		}
-	}
-
-	// Get current user from the response header
-	user := ctx.GetRespHeader("currentUser")
-	id, err := primitive.ObjectIDFromHex(user)
-
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err})
 	}
 
 	// Create user object
@@ -198,7 +217,6 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 		"updatedat":   time.Now(),
 	}
 
-	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
 	// Update user in user document
 	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"_id": id}, bson.M{"$set": update})

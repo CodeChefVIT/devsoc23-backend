@@ -9,34 +9,34 @@ import (
 
 type User struct {
 	Id           primitive.ObjectID `bson:"_id"`
-	FirstName    *string            `form:"firstName" validate:"required,min=2,max=16"`
-	LastName     *string            `form:"lastName" validate:"min=2,max=32"`
-	Email        *string            `form:"email" validate:"required,email"`
-	Password     *string            `form:"password" validate:"required,min=8,max=64"`
-	PhoneNumber  *string            `form:"phoneNumber" validate:"required,e164,min=10,max=13"`
-	Token        *string            `form:"token,omitempty"`
-	Bio          *string            `form:"bio,omitempty"`
-	Gender       *string            `form:"gender,omitempty"`
-	UserRole     string             `form:"userRole" default:"HACKER" validate:"eq=ADMIN|eq=HACKER|eq=VOTER"`
-	ProfilePhoto *string            `form:"profilePhoto,omitempty"`
-	RegNo        *string            `form:"redNo,omitempty"`
-	College      *string            `form:"college,omitempty" validate:"min=10,max=128"`
-	CollegeYear  *string            `form:"collegeYear,omitempty"`
-	BirthDate    *string            `form:"birthData,omitempty"`
-	VerifyOtp    *string            `form:"verifyOtp,omitempty"`
-	Address      *string            `form:"address,omitempty"`
-	QrData       *string            `form:"qrData,omitempty"`
-	Image        *string            `form:"image,omitempty"`
-	IsActive     bool               `form:"isActive,omitempty"`
-	IsVerify     bool               `form:"isVerify,omitempty"`
-	IsCanShare   bool               `form:"isCanShare,omitempty"`
-	IsCheckedIn  bool               `form:"isCheckedIn,omitempty"`
-	InTeam       bool               `form:"inTeam,omitempty"`
-	IsBoard      bool               `form:"isBoard,omitempty" default:"false"`
-	CreatedAt    time.Time          `form:"createdTime"`
-	UpdatedAt    time.Time          `form:"updatedTime"`
-	TeamId       *string            `form:"teamId,omitempty"`
-	UserId       string             `form:"userId"`
+	FirstName    *string            `json:"firstName" validate:"required,min=2,max=16"`
+	LastName     *string            `json:"lastName" validate:"min=2,max=32"`
+	Email        *string            `json:"email" validate:"required,email"`
+	Password     *string            `json:"password" validate:"required,min=8,max=64"`
+	PhoneNumber  *string            `json:"phoneNumber" validate:"required,e164,min=10,max=13"`
+	Token        *string            `json:"token,omitempty"`
+	Bio          *string            `json:"bio,omitempty"`
+	Gender       *string            `json:"gender,omitempty"`
+	UserRole     string             `json:"userRole" default:"HACKER" validate:"eq=ADMIN|eq=HACKER|eq=VOTER"`
+	ProfilePhoto *string            `json:"profilePhoto,omitempty"`
+	RegNo        *string            `json:"redNo,omitempty"`
+	College      *string            `json:"college,omitempty" validate:"min=10,max=128"`
+	CollegeYear  *string            `json:"collegeYear,omitempty"`
+	BirthDate    *string            `json:"birthData,omitempty"`
+	VerifyOtp    *string            `json:"verifyOtp,omitempty"`
+	Address      *string            `json:"address,omitempty"`
+	QrData       *string            `json:"qrData,omitempty"`
+	Image        *string            `json:"image,omitempty"`
+	IsActive     bool               `json:"isActive,omitempty"`
+	IsVerify     bool               `json:"isVerify,omitempty"`
+	IsCanShare   bool               `json:"isCanShare,omitempty"`
+	IsCheckedIn  bool               `json:"isCheckedIn,omitempty"`
+	InTeam       bool               `json:"inTeam,omitempty"`
+	IsBoard      bool               `json:"isBoard,omitempty" default:"false"`
+	CreatedAt    time.Time          `json:"createdTime"`
+	UpdatedAt    time.Time          `json:"updatedTime"`
+	TeamId       *string            `json:"teamId,omitempty"`
+	UserId       string             `json:"userId"`
 }
 
 type UpdateUserRequest struct {
