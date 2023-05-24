@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	controller "devsoc23-backend/controllers"
+	"devsoc23-backend/initializers"
 
 	"os"
 
@@ -26,9 +27,11 @@ func NewDatabase() controller.Database {
 		Password: os.Getenv("REDIS_DB_PASS"),
 		DB:       1,
 	})
+	s3Client := initializers.InitializeSpaces()
 	return controller.Database{
 		MongoClient: client,
 		RedisClient: rdb,
+		S3Client:    s3Client,
 	}
 
 }

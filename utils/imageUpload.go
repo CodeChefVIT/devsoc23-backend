@@ -1,71 +1,52 @@
 package utils
 
 import (
-	"bytes"
+	"context"
+	"devsoc23-backend/helper"
+	"devsoc23-backend/initializers"
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/google/uuid"
+	"cloud.google.com/go/storage"
 )
 
 type PhotoForm struct {
-	CampaignImage *multipart.FileHeader `form:"mage" binding:"required"`
+	CampaignImage *multipart.FileHeader `form:"image" binding:"required"`
 }
 
-func readFile(file *multipart.FileHeader) ([]byte, error) {
-	openedFile, _ := file.Open()
+func UploadPhoto(payload *PhotoForm, S3Client *storage.Client) (string, error) {
+	// Edit context
+	ctx := context.TODO()
 
-	binaryFile, err := io.ReadAll(openedFile)
+	BucketConfig := initializers.ClientUploader{
+		ProjectID:  os.Getenv("PROJECT_ID"),
+		BucketName: os.Getenv("BUCKET_NAME"),
+		UploadPath: "images/",
+	}
+
+	file, err := payload.CampaignImage.Open()
 
 	if err != nil {
-		return nil, err
+		return "", fmt.Errorf("image could not be parsed: %w", err)
 	}
 
-	defer func(openedFile multipart.File) {
-		err := openedFile.Close()
-		if err != nil {
-			log.Fatalf("Failed closing file %v", file.Filename)
-		}
-	}(openedFile)
-	return binaryFile, nil
-}
+	wc := S3Client.Bucket(BucketConfig.BucketName).Object(BucketConfig.UploadPath + helper.GenerateToken() + payload.CampaignImage.Filename).NewWriter(ctx)
 
-func UploadPhoto(payload *PhotoForm, s3ClientLoaded *s3.S3) (string, error) {
-	bucketName := os.Getenv("DO_SPACE_NAME")
-
-	binaryImageFile, err := readFile(payload.CampaignImage)
-
-	if err != nil {
-		return "", fmt.Errorf("generating Binary Image failed: %w", err)
+	if _, err := io.Copy(wc, file); err != nil {
+		fmt.Println(err.Error())
+		return "", fmt.Errorf("io.Copy: %v", err)
 	}
-
-	tImageUuid := uuid.New()
-
-	imagePath := "/raisze/" + tImageUuid.String() + "-" + payload.CampaignImage.Filename
-
-	tfbImage := bytes.NewReader(binaryImageFile)
-	tImageobject := s3.PutObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(imagePath),
-		Body:   tfbImage,
-		ACL:    aws.String("public-read"),
+	if err := wc.Close(); err != nil {
+		fmt.Println(err.Error())
+		return "", fmt.Errorf("Writer.Close: %v", err.Error())
 	}
-	_, uploadErr := s3ClientLoaded.PutObject(&tImageobject)
-	if uploadErr != nil {
-		return "", fmt.Errorf("failed image upload: %w", err)
-
-	}
-
-	campaignImageUrl := "https://spaces-shortsqueeze.sgp1.digitaloceanspaces.com" + imagePath
+	u := ("https://storage.googleapis.com/" + BucketConfig.BucketName + "/" + wc.Attrs().Name)
 
 	if err != nil {
 		return "", fmt.Errorf("generating Image url failed: %w", err)
 	}
-	return campaignImageUrl, nil
+	return u, nil
 
 }
