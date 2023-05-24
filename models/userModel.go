@@ -22,7 +22,7 @@ type User struct {
 	RegNo        *string            `json:"redNo,omitempty"`
 	College      *string            `json:"college,omitempty" validate:"min=10,max=128"`
 	CollegeYear  *string            `json:"collegeYear,omitempty"`
-	BirthDate    *string            `json:"birthData,omitempty"`
+	BirthDate    *string            `json:"birthDate,omitempty"`
 	VerifyOtp    *string            `json:"verifyOtp,omitempty"`
 	Github       *string            `json:"github,omitempty"`
 	QrData       *string            `json:"qrData,omitempty"`
