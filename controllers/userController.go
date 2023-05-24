@@ -93,6 +93,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 		College:     payload.College,
 		CollegeYear: payload.CollegeYear,
 		BirthDate:   payload.BirthDate,
+		Mode:        payload.Mode,
 		Image:       &url,
 		IsActive:    false,
 		IsVerify:    false,
@@ -159,7 +160,6 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 
 	// Get request body and bind to payload
 	var payload models.UpdateUserRequest
-	var url string
 
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
@@ -181,13 +181,20 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
 	}
-	fmt.Println(findUser.Image)
-	// Set default image url
-	url = *findUser.Image
+	var url string
+	if findUser.Image != nil {
+		url = *findUser.Image
+	} else {
+		url = "default_url" // Provide a default URL or handle it as per your requirement
+	}
+
 	fmt.Println("OLD URL: " + url)
 
 	file, err := ctx.FormFile("image")
-	if err == nil {
+	if err != nil {
+		fmt.Println(err.Error())
+		fmt.Println("NO FILE")
+	} else {
 		// fileSize := file.Size
 		// fmt.Println(fileSize) // this will return you a file size.
 		image := utils.PhotoForm{
@@ -198,7 +205,7 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error(), "message": "Image Upload Failed"})
 		} else {
 			url = newUrl
-			fmt.Println("NEW URL GEN")
+			fmt.Println("NEW URL GEN: " + url)
 		}
 	}
 

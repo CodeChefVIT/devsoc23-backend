@@ -27,6 +27,7 @@ type User struct {
 	Address      *string            `json:"address,omitempty"`
 	QrData       *string            `json:"qrData,omitempty"`
 	Image        *string            `json:"image,omitempty"`
+	Mode         *string            `json:"mode,omitempty"`
 	IsActive     bool               `json:"isActive,omitempty"`
 	IsVerify     bool               `json:"isVerify,omitempty"`
 	IsCanShare   bool               `json:"isCanShare,omitempty"`
@@ -45,7 +46,7 @@ type UpdateUserRequest struct {
 	Email         *string               `form:"email" validate:"required,email"`
 	PhoneNumber   *string               `form:"phoneNumber" validate:"required,e164,min=10,max=13"`
 	ProfilePhoto  *string               `form:"profilePhoto,omitempty"`
-	College       *string               `form:"college,omitempty" validate:"min=10,max=128"`
+	College       *string               `form:"college,omitempty" validate:"min=2,max=128"`
 	CollegeYear   *string               `form:"collegeYear,omitempty"`
 	Bio           *string               `form:"bio,omitempty"`
 	RegNo         *string               `form:"redNo,omitempty"`
@@ -78,6 +79,7 @@ type CreateUserRequest struct {
 	Bio           *string               `form:"bio,omitempty"`
 	Gender        *string               `form:"gender,omitempty"`
 	BirthDate     *string               `form:"birthDate,omitempty"`
+	Mode          *string               `form:"mode,omitempty"`
 	IsActive      bool                  `form:"isActive,omitempty"`
 	IsVerify      bool                  `form:"isVerify,omitempty"`
 	IsCanShare    bool                  `form:"isCanShare,omitempty"`
