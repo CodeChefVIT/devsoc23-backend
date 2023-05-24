@@ -77,6 +77,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	now := time.Now()
 	userRole := "HACKER"
 	hash, _ := utils.HashPassword(*payload.Password)
+	url := ""
 
 	newUser := models.User{
 		Id:          primitive.NewObjectID(),
@@ -92,6 +93,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 		College:     payload.College,
 		CollegeYear: payload.CollegeYear,
 		BirthDate:   payload.BirthDate,
+		Image:       &url,
 		IsActive:    false,
 		IsVerify:    false,
 		IsCanShare:  false,
@@ -152,9 +154,9 @@ func (databaseClient Database) FindUser(ctx *fiber.Ctx) error {
 }
 
 func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
-	
+
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
-	
+
 	// Get request body and bind to payload
 	var payload models.UpdateUserRequest
 	var url string
@@ -179,14 +181,15 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not found"})
 	}
-
+	fmt.Println(findUser.Image)
 	// Set default image url
 	url = *findUser.Image
-	fmt.Println("OLD URL: "+ url)
-
+	fmt.Println("OLD URL: " + url)
 
 	file, err := ctx.FormFile("image")
 	if err == nil {
+		// fileSize := file.Size
+		// fmt.Println(fileSize) // this will return you a file size.
 		image := utils.PhotoForm{
 			CampaignImage: file,
 		}
@@ -216,7 +219,6 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 		"iscanshare":  false,
 		"updatedat":   time.Now(),
 	}
-
 
 	// Update user in user document
 	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"_id": id}, bson.M{"$set": update})
