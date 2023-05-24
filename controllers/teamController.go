@@ -240,7 +240,7 @@ func (databaseClient Database) GetIsMember(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "teamId": findTeam.Id, "teamName": findTeam.TeamName, "inviteCode": findTeam.InviteCode, "inTeam": true, "memberDetails": users})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "teamId": findTeam.Id, "isTeamLeader": findTeam.TeamLeaderId == findUser.Id, "teamName": findTeam.TeamName, "teamLeader": findTeam.TeamLeaderId, "inviteCode": findTeam.InviteCode, "inTeam": true, "memberDetails": users})
 }
 
 func (databaseClient Database) UpdateTeam(ctx *fiber.Ctx) error {
