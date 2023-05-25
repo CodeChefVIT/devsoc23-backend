@@ -124,7 +124,6 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
 
-
 	// Generate OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
@@ -135,7 +134,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	}
 
 	// Send email with OTP
-	verifyUrl := "http://localhost:3000/verify?email=" + *payload.Email + "&otp=" + otp
+	verifyUrl := "https://devsoc23-portal-peach.vercel.app/verify?email=" + *payload.Email + "&otp=" + otp
 	subject := "Devsoc Verification"
 	body := "Please verify your Devsoc account by clinking this link: " + verifyUrl
 	err = utils.SendMail(subject, body, *payload.Email)
@@ -190,6 +189,8 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
 	}
+
+	fmt.Println(payload)
 
 	// Get current user from the response header
 	id, err := primitive.ObjectIDFromHex(ctx.GetRespHeader("currentUser"))
@@ -349,6 +350,7 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 	}
 
 	// Check if user is verified
+	fmt.Println(findUser.IsVerify)
 	if !findUser.IsVerify {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "User not verified"})
 	}
@@ -429,9 +431,9 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	}
 
 	// Send email with OTP
-	url := "http://localhost:3000/verify?email=" + email + "&otp=" + otp
+	url := "https://devsoc23-portal-peach.vercel.app/verify?email=" + email + "&otp=" + otp
 	subject := "Devsoc Verification"
-	body := "Please verify your Devsoc account by clinking this link: " + url
+	body := "Please verify your Devsoc account by clicking this link: " + url
 	err = utils.SendMail(subject, body, email)
 
 	// Send the email
