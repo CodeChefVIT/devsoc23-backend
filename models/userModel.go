@@ -22,9 +22,9 @@ type User struct {
 	RegNo        *string            `json:"redNo,omitempty"`
 	College      *string            `json:"college,omitempty" validate:"min=10,max=128"`
 	CollegeYear  *string            `json:"collegeYear,omitempty"`
-	BirthDate    *string            `json:"birthData,omitempty"`
+	BirthDate    *string            `json:"birthDate,omitempty"`
 	VerifyOtp    *string            `json:"verifyOtp,omitempty"`
-	Address      *string            `json:"address,omitempty"`
+	Github       *string            `json:"github,omitempty"`
 	QrData       *string            `json:"qrData,omitempty"`
 	Image        *string            `json:"image,omitempty"`
 	Mode         *string            `json:"mode,omitempty"`
@@ -51,9 +51,9 @@ type UpdateUserRequest struct {
 	Bio           *string               `form:"bio,omitempty"`
 	RegNo         *string               `form:"redNo,omitempty"`
 	Gender        *string               `form:"gender,omitempty"`
-	BirthDate     *string               `form:"birthData,omitempty"`
+	BirthDate     *string               `form:"birthDate,omitempty"`
 	VerifyOtp     *string               `form:"verifyOtp,omitempty"`
-	Address       *string               `form:"address,omitempty"`
+	Github        *string               `form:"github,omitempty"`
 	QrData        *string               `form:"qrData,omitempty"`
 	IsActive      bool                  `form:"isActive,omitempty"`
 	IsVerify      bool                  `form:"isVerify,omitempty"`
@@ -80,6 +80,7 @@ type CreateUserRequest struct {
 	Gender        *string               `form:"gender,omitempty"`
 	BirthDate     *string               `form:"birthDate,omitempty"`
 	Mode          *string               `form:"mode,omitempty"`
+	Github        *string               `form:"github,omitempty"`
 	IsActive      bool                  `form:"isActive,omitempty"`
 	IsVerify      bool                  `form:"isVerify,omitempty"`
 	IsCanShare    bool                  `form:"isCanShare,omitempty"`
