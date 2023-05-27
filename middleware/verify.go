@@ -41,7 +41,7 @@ func VerifyToken(ctx *fiber.Ctx) error {
 	err = userCollection.FindOne(context.TODO(), filter).Decode(&user)
 
 	if err != nil {
-		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists"})
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists", "user":user, "err":err.Error(), "jwt":res})
 	}
 
 	ctx.Set("currentUser", user.Id.Hex())
