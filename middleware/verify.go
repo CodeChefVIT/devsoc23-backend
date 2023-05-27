@@ -5,6 +5,7 @@ import (
 	"devsoc23-backend/database"
 	"devsoc23-backend/models"
 	"devsoc23-backend/utils"
+	"log"
 	"os"
 	"strings"
 
@@ -36,13 +37,22 @@ func VerifyToken(ctx *fiber.Ctx) error {
 	filter := bson.M{"_id": res.Id}
 
 	user := models.User{}
-	userCollection := database.NewDatabase().MongoClient.Database("devsoc").Collection("users")
+	client := database.NewDatabase().MongoClient
+	userCollection := client.Database("devsoc").Collection("users")
 
 	err = userCollection.FindOne(context.TODO(), filter).Decode(&user)
 
 	if err != nil {
-		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists", "user":user, "err":err.Error(), "jwt":res})
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists", "user": user, "err": err.Error(), "jwt": res})
 	}
+
+	err = client.Disconnect(context.TODO())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO optional you can log your closed MongoDB client
+	// fmt.Println("Connection to MongoDB closed.")
 
 	ctx.Set("currentUser", user.Id.Hex())
 	return ctx.Next()
