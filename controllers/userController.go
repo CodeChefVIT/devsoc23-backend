@@ -431,7 +431,7 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	}
 
 	// Send email with OTP
-	url := "https://devsoc23-portal-peach.vercel.app/verify?email=" + email + "&otp=" + otp
+	url := "https://devsoc23-portal.vercel.app/verify?email=" + email + "&otp=" + otp
 	subject := "Devsoc Verification"
 	body := "Please verify your Devsoc account by clicking this link: " + url
 	err = utils.SendMail(subject, body, email)
