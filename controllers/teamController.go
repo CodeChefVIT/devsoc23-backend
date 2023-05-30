@@ -424,7 +424,7 @@ func (databaseClient Database) JoinTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "you cannot invite yourself for your team"})
 	}
 
-	if findTeam.TeamSize == 4 {
+	if findTeam.TeamSize == 5 {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team is full"})
 	}
 
