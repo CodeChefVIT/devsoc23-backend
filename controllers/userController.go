@@ -68,10 +68,18 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
+	// Check for unique email
 	filter := bson.M{"email": payload.Email}
 	count, _ := userCollection.CountDocuments(context.TODO(), filter)
 	if count > 0 {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Email already exists"})
+	}
+	
+	// Check for unique phone number
+	filter = bson.M{"phonenumber": payload.PhoneNumber}
+	count, _ = userCollection.CountDocuments(context.TODO(), filter)
+	if count > 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": "Phone Number already exists"})
 	}
 
 	now := time.Now()
@@ -128,7 +136,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 	// Store OTP in redis
-	err = databaseClient.RedisClient.Set(context.Background(), *payload.Email, otp, 0).Err()
+	err = databaseClient.RedisClient.Set(context.Background(), *payload.Email, otp, 5*time.Minute).Err()
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not set otp"})
 	}
@@ -379,7 +387,7 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser, "token": token})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true","token": token})
 }
 
 func (databaseClient Database) LogoutUser(ctx *fiber.Ctx) error {
@@ -425,7 +433,7 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 	// Store OTP in redis
-	err := databaseClient.RedisClient.Set(context.Background(), email, otp, 0).Err()
+	err := databaseClient.RedisClient.Set(context.Background(), email, otp, 5*time.Minute).Err()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not set otp"})
 	}
