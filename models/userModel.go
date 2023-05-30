@@ -12,7 +12,7 @@ type User struct {
 	FirstName    *string            `json:"firstName" validate:"required,min=2,max=16"`
 	LastName     *string            `json:"lastName" validate:"min=2,max=32"`
 	Email        *string            `json:"email" validate:"required,email"`
-	Password     *string            `json:"password" validate:"required,min=8,max=64"`
+	Password     *string            `json:"-" validate:"required,min=8,max=64"`
 	PhoneNumber  *string            `json:"phoneNumber" validate:"required,e164,min=10,max=13"`
 	Token        *string            `json:"token,omitempty"`
 	Bio          *string            `json:"bio,omitempty"`
@@ -20,7 +20,7 @@ type User struct {
 	UserRole     string             `json:"userRole" default:"HACKER" validate:"eq=ADMIN|eq=HACKER|eq=VOTER"`
 	ProfilePhoto *string            `json:"profilePhoto,omitempty"`
 	RegNo        *string            `json:"redNo,omitempty"`
-	College      *string            `json:"college,omitempty" validate:"min=10,max=128"`
+	College      *string            `json:"college,omitempty" validate:"min=1,max=128"`
 	CollegeYear  *string            `json:"collegeYear,omitempty"`
 	BirthDate    *string            `json:"birthDate,omitempty"`
 	VerifyOtp    *string            `json:"verifyOtp,omitempty"`
