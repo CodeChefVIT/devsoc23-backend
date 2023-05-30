@@ -21,7 +21,7 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	userGroup.Get("/me", h.FindUser)
 	userGroup.Post("/update", h.UpdateUser)
 	userGroup.Delete("/delete", h.DeleteUser)
-	userGroup.Get("/logout", h.LogoutUser)
+	userGroup.Post("/logout", h.LogoutUser)
 	userGroup.Get("/reset", h.ResetPassword)
 
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
