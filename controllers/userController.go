@@ -134,7 +134,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	}
 
 	// Send email with OTP
-	verifyUrl := "https://devsoc23-portal-peach.vercel.app/verify?email=" + *payload.Email + "&otp=" + otp
+	verifyUrl := "https://devsoc23.codechefvit.com/verify?email=" + *payload.Email + "&otp=" + otp
 	subject := "Devsoc Verification"
 	body := "Please verify your Devsoc account by clinking this link: " + verifyUrl
 	err = utils.SendMail(subject, body, *payload.Email)
@@ -431,7 +431,7 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	}
 
 	// Send email with OTP
-	url := "https://devsoc23-portal-peach.vercel.app/verify?email=" + email + "&otp=" + otp
+	url := "https://devsoc23.codechefvit.com/verify?email=" + email + "&otp=" + otp
 	subject := "Devsoc Verification"
 	body := "Please verify your Devsoc account by clicking this link: " + url
 	err = utils.SendMail(subject, body, email)
