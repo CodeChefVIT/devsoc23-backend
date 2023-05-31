@@ -126,7 +126,7 @@ func (databaseClient Database) GetTeams(ctx *fiber.Ctx) error {
 
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
-	var teams []models.Team
+	var teams []models.AllTeamRequest
 	cur, err := teamCollection.Find(context.TODO(), bson.M{})
 
 	if err != nil {
@@ -137,8 +137,20 @@ func (databaseClient Database) GetTeams(ctx *fiber.Ctx) error {
 	for cur.Next(context.Background()) {
 		// To decode into a struct, use cursor.Decode()
 
-		var team models.Team
+		var team models.AllTeamRequest
 		err := cur.Decode(&team)
+		var teamMembers []models.User
+		for i := 0; i < team.TeamSize; i++ {
+			userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
+			filter := bson.M{"_id": team.TeamMembers[i]}
+			var member models.User
+			err = userCollection.FindOne(context.TODO(), filter).Decode(&member)
+			if err != nil {
+				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
+			}
+			teamMembers = append(teamMembers, member)
+		}
+		team.TeamMemberDetails = teamMembers
 		if err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 		}

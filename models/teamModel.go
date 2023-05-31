@@ -41,3 +41,20 @@ type UpdateTeam struct {
 	CreatedAt        time.Time            `json:"createdTime"`
 	UpdatedAt        time.Time            `json:"updatedTime"`
 }
+
+type AllTeamRequest struct {
+	Id                primitive.ObjectID   `bson:"_id"`
+	TeamName          *string              `json:"teamName" validate:"required"`
+	TeamLeaderId      primitive.ObjectID   `bson:"leaderId"`
+	TeamMembers       []primitive.ObjectID `bson:"teamMembers" json:"teamMembers"`
+	TeamMemberDetails []User               `bson:"teamMemberDetails" json:"teamMemberDetails"`
+	TeamSize          int                  `bson:"teamSize" json:"teamSize"`
+	ProjectId         primitive.ObjectID   `bson:"projectId,omitempty"`
+	ProjectExists     bool                 `json:"projectExists,omitempty"`
+	InvitedTeammates  []primitive.ObjectID `json:"invitedTeammates,omitempty"`
+	Round             int                  `json:"round,omitempty"`
+	IsFinalised       bool                 `json:"isFinalised,omitempty"`
+	InviteCode        string               `bson:"inviteCode" json:"inviteCode,omitempty"`
+	CreatedAt         time.Time            `json:"createdTime"`
+	UpdatedAt         time.Time            `json:"updatedTime"`
+}
