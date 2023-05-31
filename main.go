@@ -4,8 +4,11 @@ import (
 	"devsoc23-backend/database"
 	helper "devsoc23-backend/helper"
 	"devsoc23-backend/routes"
+	"log"
+	"os"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -13,6 +16,17 @@ import (
 )
 
 func main() {
+	helper.LoadEnv()
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn: os.Getenv("SENTRY_DSN"),
+		// Set TracesSampleRate to 1.0 to capture 100%
+		// of transactions for performance monitoring.
+		// We recommend adjusting this value in production,
+		TracesSampleRate: 1.0,
+	})
+	if err != nil {
+		log.Fatalf("sentry.Init: %s", err)
+	}
 
 	app := fiber.New()
 	app.Use(cors.New(cors.Config{
@@ -28,7 +42,6 @@ func main() {
 		Expiration: 30 * time.Second,
 	}))
 	app.Use(logger.New())
-	helper.LoadEnv()
 
 	handler := database.NewDatabase()
 
@@ -41,7 +54,7 @@ func main() {
 	routes.TeamRoutes(app, &handler)
 	routes.ProjectRoutes(app, &handler)
 	routes.TimelineRoutes(app, &handler)
-	err := app.Listen(":8000")
+	err = app.Listen(":8000")
 	if err != nil {
 		panic(err)
 	}
