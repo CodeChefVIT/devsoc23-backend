@@ -16,9 +16,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var store = make(map[string]string)
-var reset = make(map[string]string)
-
 type EmailData struct {
 	Email string `json:"email"`
 }
@@ -137,7 +134,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	// Send email with OTP
 	verifyUrl := "https://devsoc23.codechefvit.com/verify?email=" + *payload.Email + "&otp=" + otp
 	subject := "Devsoc Verification"
-	body := "Please verify your Devsoc account by clinking this link: " + verifyUrl
+	body := "Please verify your Devsoc account by clicking this link: " + verifyUrl
 	err = utils.SendMail(subject, body, *payload.Email)
 
 	// Send the email
@@ -241,7 +238,6 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 	update := bson.M{
 		"firstname":   payload.FirstName,
 		"lastname":    payload.LastName,
-		"email":       payload.Email,
 		"phonenumber": payload.PhoneNumber,
 		"college":     payload.College,
 		"bio":         payload.Bio,
@@ -579,13 +575,16 @@ func (databaseClient Database) ForgotPasswordMail(ctx *fiber.Ctx) error {
 	// Generate OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
-	// Store OTP
-	reset[email] = otp
+	// Store OTP in redis
+	err := databaseClient.RedisClient.Set(context.Background(), email, otp, 5*time.Minute).Err()
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not set otp"})
+	}
 
 	// Send email with OTP
 	subject := "Password Reset Request"
 	body := "Your password reset OTP is: " + otp
-	err := utils.SendMail(subject, body, email)
+	err = utils.SendMail(subject, body, email)
 
 	// Send the email
 	if err != nil {
@@ -614,13 +613,11 @@ func (databaseClient Database) ForgotPassword(ctx *fiber.Ctx) error {
 	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Email not found"})
 	}
-	// Retrieve OTP from store
-	storedOtp, ok := reset[email]
-	if !ok {
-		// Return error if OTP not found for email
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "OTP not found",
-		})
+
+	// Retrieve OTP from redis
+	storedOtp, err := databaseClient.RedisClient.Get(context.Background(), email).Result()
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "OTP not found"})
 	}
 
 	// Compare OTP
@@ -630,9 +627,6 @@ func (databaseClient Database) ForgotPassword(ctx *fiber.Ctx) error {
 			"message": "Incorrect OTP",
 		})
 	}
-
-	// Delete OTP from store
-	delete(store, email)
 
 	hash, _ := utils.HashPassword(payload.Newpass)
 	// Create a filter to find the user with the given email
