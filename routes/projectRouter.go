@@ -18,9 +18,11 @@ func ProjectRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	projectGroup.Delete("/delete", h.DeleteProject)
 	projectGroup.Post("/finalproject", h.FinaliseProjectSubmission)
 	projectGroup.Get("/status", h.GetStatus)
-	
+
 	projectGroup.Post("/like/:projectId", h.LikeProject)
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
 	adminGroup.Get("/allprojects", h.GetProjects)
+	adminGroup.Post("/comment", h.CreateComment)
+	adminGroup.Get("/comment/:projectId", h.GetComment)
 
 }

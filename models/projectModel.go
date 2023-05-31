@@ -25,7 +25,6 @@ type Project struct {
 	LikesId            []primitive.ObjectID `json:"likesId"`
 }
 type CreateProjectIdeaRequest struct {
-
 	ProjectName        *string `json:"projectName"`
 	ProjectDescription *string `json:"projectDescription"`
 	ProjectDriveLink   *string `json:"projectDriveLink"`
@@ -61,4 +60,16 @@ type UpdateProjectRequest struct {
 	ProjectTrack       *string            `json:"projectTrack"`
 	ProjectTags        []string           `json:"projectTags"`
 	IsFinal            bool               `json:"isFinal,omitempty"`
+}
+
+type CreateProjectComment struct {
+	Id        primitive.ObjectID `bson:"_id"`
+	ProjectId *string            `json:"projectId" validate:"required"`
+	Comment   *string            `json:"comment" validate:"required"`
+}
+
+type ProjectComment struct {
+	Id        primitive.ObjectID `bson:"_id"`
+	ProjectId *string            `json:"projectId" validate:"required"`
+	Comment   *string            `bson:"comment"`
 }
