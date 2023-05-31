@@ -134,7 +134,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	// Send email with OTP
 	verifyUrl := "https://devsoc23.codechefvit.com/verify?email=" + *payload.Email + "&otp=" + otp
 	subject := "Devsoc Verification"
-	body := "Please verify your Devsoc account by clicking this link: " + verifyUrl
+	body := "Please verify your DEVSOC account by clicking this link: " + verifyUrl + "\n\nIn addition to this, you are also required to join our Discord server for further updates. Link: https://discord.codechefvit.com"
 	err = utils.SendMail(subject, body, *payload.Email)
 
 	// Send the email
@@ -430,7 +430,7 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	// Send email with OTP
 	url := "https://devsoc23.codechefvit.com/verify?email=" + email + "&otp=" + otp
 	subject := "Devsoc Verification"
-	body := "Please verify your Devsoc account by clicking this link: " + url
+	body := "Please verify your DEVSOC account by clicking this link: " + url + "\n\nIn addition to this, you are also required to join our Discord server for further updates. Link: https://discord.codechefvit.com"
 	err = utils.SendMail(subject, body, email)
 
 	// Send the email
