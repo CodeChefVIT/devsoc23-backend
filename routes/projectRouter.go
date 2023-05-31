@@ -10,7 +10,7 @@ import (
 func ProjectRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 
 	projectGroup := incomingRoutes.Group("/project", middleware.VerifyToken)
-	projectGroup.Post("/idea",h.CreateProjectIdea)
+	projectGroup.Post("/idea", h.CreateProjectIdea)
 	// projectGroup.Post("/create", h.CreateProject)
 	projectGroup.Get("/get", h.GetProjectByUserid)
 	projectGroup.Get("/get/:teamId", h.GetProjectByTeamid)
@@ -18,7 +18,9 @@ func ProjectRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	projectGroup.Delete("/delete", h.DeleteProject)
 	projectGroup.Post("/finalproject", h.FinaliseProjectSubmission)
 	projectGroup.Get("/status", h.GetStatus)
-	projectGroup.Get("/allprojects", h.GetProjects)
-
+	
 	projectGroup.Post("/like/:projectId", h.LikeProject)
+	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
+	adminGroup.Get("/allprojects", h.GetProjects)
+
 }
