@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 
 	"cloud.google.com/go/storage"
@@ -30,6 +31,26 @@ func UploadPhoto(payload *PhotoForm, S3Client *storage.Client) (string, error) {
 
 	if err != nil {
 		return "", fmt.Errorf("image could not be parsed: %w", err)
+	}
+
+	// Check type of file
+	// Create a buffer to store the header of the file in
+	fileHeader := make([]byte, 512)
+
+	// Copy the headers into the FileHeader buffer
+	if _, err := file.Read(fileHeader); err != nil {
+		return "", fmt.Errorf("could not copy file headers %v", err)
+	}
+
+	// set position back to start.
+	if _, err := file.Seek(0, 0); err != nil {
+		return "", fmt.Errorf("could not reset file %v", err)
+	}
+
+	fileType := http.DetectContentType(fileHeader)
+	fmt.Println(fileType)
+	if fileType != "image/jpeg" && fileType != "image/png" {
+		return "", fmt.Errorf("image should be jpeg or png")
 	}
 
 	wc := S3Client.Bucket(BucketConfig.BucketName).Object(BucketConfig.UploadPath + helper.GenerateToken() + payload.CampaignImage.Filename).NewWriter(ctx)

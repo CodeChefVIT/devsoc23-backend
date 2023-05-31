@@ -7,6 +7,7 @@ import (
 	"devsoc23-backend/utils"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type PromoteRequest struct {
+	Round int `json:"round"`
+}
 
 func (databaseClient Database) CreateTeam(ctx *fiber.Ctx) error {
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
@@ -546,27 +551,40 @@ func (databaseClient Database) LeaveTeam(ctx *fiber.Ctx) error {
 
 func (databaseClient Database) PromoteTeam(ctx *fiber.Ctx) error {
 
+	payload := PromoteRequest{}
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	errors := utils.ValidateStruct(payload)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": errors})
+	}
 	teamId := ctx.Params("teamId")
+	id, err := primitive.ObjectIDFromHex(teamId)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not parse teamId"})
+	}
+
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
 
 	findTeam := models.Team{}
-	filterTeam := bson.M{"_id": teamId}
+	filterTeam := bson.M{"_id": id}
 
 	errr := teamCollection.FindOne(context.TODO(), filterTeam).Decode(&findTeam)
 
 	if errr != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Team not found"})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": errr.Error()})
 	}
 
 	updateTeam := bson.D{
-		{Key: "$set", Value: bson.D{{Key: "round", Value: findTeam.Round + 1}}},
+		{Key: "$set", Value: bson.D{{Key: "round", Value: payload.Round}}},
 	}
 
-	res, errr := teamCollection.UpdateOne(context.TODO(), bson.M{"_id": teamId}, updateTeam)
+	_, errr = teamCollection.UpdateOne(context.TODO(), bson.M{"_id": id}, updateTeam)
 	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": errr})
 	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": res})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "Team Promoted to round: " + strconv.Itoa(payload.Round)})
 }
 
 func (databaseClient Database) FinaliseTeam(ctx *fiber.Ctx) error {

@@ -86,12 +86,18 @@ func VerfiyAdmin(ctx *fiber.Ctx) error {
 	filter := bson.M{"_id": res.Id}
 
 	user := models.User{}
-	userCollection := database.NewDatabase().MongoClient.Database("devsoc").Collection("users")
+	client := database.NewDatabase().MongoClient
+	userCollection := client.Database("devsoc").Collection("users")
 
 	err = userCollection.FindOne(context.TODO(), filter).Decode(&user)
 
 	if err != nil {
 		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists"})
+	}
+
+	err = client.Disconnect(context.TODO())
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	ctx.Set("currentUser", user.Id.Hex())
@@ -126,7 +132,8 @@ func VerifyBoard(ctx *fiber.Ctx) error {
 	filter := bson.M{"_id": res.Id}
 
 	user := models.User{}
-	userCollection := database.NewDatabase().MongoClient.Database("devsoc").Collection("users")
+	client := database.NewDatabase().MongoClient
+	userCollection := client.Database("devsoc").Collection("users")
 
 	err = userCollection.FindOne(context.TODO(), filter).Decode(&user)
 
@@ -136,6 +143,11 @@ func VerifyBoard(ctx *fiber.Ctx) error {
 
 	if !user.IsBoard {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "fail", "message": "User is not a board member"})
+	}
+
+	err = client.Disconnect(context.TODO())
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	ctx.Set("currentUser", user.Id.Hex())

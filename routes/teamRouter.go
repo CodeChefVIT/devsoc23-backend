@@ -14,14 +14,14 @@ func TeamRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	teamGroup.Post("/join/:inviteCode", h.JoinTeam)
 	teamGroup.Post("/leave", h.LeaveTeam)
 	teamGroup.Get("/get/:teamId", h.GetTeam)
-	teamGroup.Get("/all", h.GetTeams)
 	teamGroup.Get("/members/:teamId", h.GetTeamMembers)
 	teamGroup.Get("/ismember", h.GetIsMember)
 	teamGroup.Post("/:teamId", h.UpdateTeam)
 	teamGroup.Delete("/:teamId", h.DeleteTeam)
 	teamGroup.Post("/remove/:teamId/:memberId", h.RemoveMember)
-
+	
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
+	adminGroup.Get("/team", h.GetTeams)
 	adminGroup.Post("/promote/:teamId", h.PromoteTeam)
 	adminGroup.Post("/finalise/:teamId", h.FinaliseTeam)
 	adminGroup.Post("/disqualify/:teamId", h.DisqualifyTeam)

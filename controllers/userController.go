@@ -68,6 +68,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 
 	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
+	// Check for unique email
 	filter := bson.M{"email": payload.Email}
 	count, _ := userCollection.CountDocuments(context.TODO(), filter)
 	if count > 0 {
@@ -128,7 +129,7 @@ func (databaseClient Database) RegisterUser(ctx *fiber.Ctx) error {
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 	// Store OTP in redis
-	err = databaseClient.RedisClient.Set(context.Background(), *payload.Email, otp, 0).Err()
+	err = databaseClient.RedisClient.Set(context.Background(), *payload.Email, otp, 5*time.Minute).Err()
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not set otp"})
 	}
@@ -190,7 +191,7 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "err": err.Error()})
 	}
 
-	fmt.Println(payload)
+	// fmt.Println(payload)
 
 	// Get current user from the response header
 	id, err := primitive.ObjectIDFromHex(ctx.GetRespHeader("currentUser"))
@@ -229,7 +230,7 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 		}
 		newUrl, uploadErr := utils.UploadPhoto(&image, databaseClient.S3Client)
 		if uploadErr != nil {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error(), "message": "Image Upload Failed"})
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": uploadErr.Error(), "message": "Image Upload Failed"})
 		} else {
 			url = newUrl
 			fmt.Println("NEW URL GEN: " + url)
@@ -379,7 +380,7 @@ func (databaseClient Database) LoginUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not update refreshToken"})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "user": findUser, "token": token})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "token": token})
 }
 
 func (databaseClient Database) LogoutUser(ctx *fiber.Ctx) error {
@@ -425,7 +426,7 @@ func (databaseClient Database) Sendotp(c *fiber.Ctx) error {
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 
 	// Store OTP in redis
-	err := databaseClient.RedisClient.Set(context.Background(), email, otp, 0).Err()
+	err := databaseClient.RedisClient.Set(context.Background(), email, otp, 5*time.Minute).Err()
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Could not set otp"})
 	}

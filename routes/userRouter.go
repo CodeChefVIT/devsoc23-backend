@@ -11,7 +11,6 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 
 	incomingRoutes.Post("/users/login", h.LoginUser)
 	incomingRoutes.Post("/users/signup", h.RegisterUser)
-	incomingRoutes.Get("/users", h.GetUsers)
 	incomingRoutes.Post("/users/refresh", h.RefreshToken)
 	incomingRoutes.Post("/users/verify", h.Verifyotp)
 	incomingRoutes.Post("/users/otp", h.Sendotp)
@@ -22,10 +21,11 @@ func UserRoutes(incomingRoutes *fiber.App, h *controller.Database) {
 	userGroup.Get("/me", h.FindUser)
 	userGroup.Post("/update", h.UpdateUser)
 	userGroup.Delete("/delete", h.DeleteUser)
-	userGroup.Get("/logout", h.LogoutUser)
+	userGroup.Post("/logout", h.LogoutUser)
 	userGroup.Get("/reset", h.ResetPassword)
 
 	adminGroup := incomingRoutes.Group("/admin", middleware.VerfiyAdmin)
+	adminGroup.Get("/users", h.GetUsers)
 	adminGroup.Post("/checkin/:userId", h.CheckIn)
 	adminGroup.Post("/checkout/:userId", h.CheckOut)
 }
