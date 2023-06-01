@@ -109,13 +109,47 @@ func (databaseClient Database) GetTeam(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "TeamId not parsable"})
 	}
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
-	findTeam := models.Team{}
+	findTeam := models.AllTeamRequest{}
 	filter := bson.M{"_id": teamId}
 
-	err = teamCollection.FindOne(context.TODO(), filter).Decode(&findTeam)
+	errr := teamCollection.FindOne(context.TODO(), filter).Decode(&findTeam)
+	var teamMembers []models.User
 
-	if err != nil {
+	for i := 0; i < findTeam.TeamSize; i++ {
+
+		var member models.User
+
+		filter := bson.M{"_id": findTeam.TeamMembers[i]}
+		err = userCollection.FindOne(context.TODO(), filter).Decode(&member)
+
+		if err != nil {
+			member = models.User{
+				FirstName:   nil,
+				LastName:    nil,
+				Email:       nil,
+				Password:    nil,
+				PhoneNumber: nil,
+				Token:       nil,
+				Bio:         nil,
+				Gender:      nil,
+				UserRole:    "HACKER",
+				// Set other fields to their default or blank values
+				IsActive:    false,
+				IsVerify:    false,
+				IsCanShare:  false,
+				IsCheckedIn: false,
+				InTeam:      false,
+				IsBoard:     false,
+			}
+		}
+
+		teamMembers = append(teamMembers, member)
+	}
+	findTeam.TeamMemberDetails = teamMembers
+
+	if errr != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 	}
 
