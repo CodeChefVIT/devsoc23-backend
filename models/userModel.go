@@ -19,7 +19,7 @@ type User struct {
 	Gender       *string            `json:"gender,omitempty"`
 	UserRole     string             `json:"userRole" default:"HACKER" validate:"eq=ADMIN|eq=HACKER|eq=VOTER"`
 	ProfilePhoto *string            `json:"profilePhoto,omitempty"`
-	RegNo        *string            `json:"redNo,omitempty"`
+	RegNo        *string            `json:"regNo,omitempty"`
 	College      *string            `json:"college,omitempty" validate:"min=1,max=128"`
 	CollegeYear  *string            `json:"collegeYear,omitempty"`
 	BirthDate    *string            `json:"birthDate,omitempty"`
@@ -49,7 +49,7 @@ type UpdateUserRequest struct {
 	College       *string               `form:"college,omitempty" validate:"min=2,max=128"`
 	CollegeYear   *string               `form:"collegeYear,omitempty"`
 	Bio           *string               `form:"bio,omitempty"`
-	RegNo         *string               `form:"redNo,omitempty"`
+	RegNo         *string               `form:"regNo,omitempty"`
 	Gender        *string               `form:"gender,omitempty"`
 	BirthDate     *string               `form:"birthDate,omitempty"`
 	Mode          *string               `form:"mode,omitempty"`
