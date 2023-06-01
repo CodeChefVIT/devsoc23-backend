@@ -52,6 +52,7 @@ type UpdateUserRequest struct {
 	RegNo         *string               `form:"redNo,omitempty"`
 	Gender        *string               `form:"gender,omitempty"`
 	BirthDate     *string               `form:"birthDate,omitempty"`
+	Mode          *string               `form:"mode,omitempty"`
 	VerifyOtp     *string               `form:"verifyOtp,omitempty"`
 	Github        *string               `form:"github,omitempty"`
 	QrData        *string               `form:"qrData,omitempty"`
