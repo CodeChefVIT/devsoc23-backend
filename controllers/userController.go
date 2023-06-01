@@ -246,6 +246,7 @@ func (databaseClient Database) UpdateUser(ctx *fiber.Ctx) error {
 		"collegeyear": payload.CollegeYear,
 		"birthdate":   payload.BirthDate,
 		"github":      payload.Github,
+		"mode":        payload.Mode,
 		"image":       url,
 		"isactive":    false,
 		"iscanshare":  false,
