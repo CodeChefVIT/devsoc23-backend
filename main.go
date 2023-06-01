@@ -6,12 +6,10 @@ import (
 	"devsoc23-backend/routes"
 	"log"
 	"os"
-	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
@@ -37,10 +35,10 @@ func main() {
 	}))
 
 	// Api rate limiter
-	app.Use(limiter.New(limiter.Config{
-		Max:        100,
-		Expiration: 30 * time.Second,
-	}))
+	// app.Use(limiter.New(limiter.Config{
+	// 	Max:        100,
+	// 	Expiration: 30 * time.Second,
+	// }))
 	app.Use(logger.New())
 
 	handler := database.NewDatabase()
