@@ -125,6 +125,7 @@ func (databaseClient Database) GetTeam(ctx *fiber.Ctx) error {
 func (databaseClient Database) GetTeams(ctx *fiber.Ctx) error {
 
 	teamCollection := databaseClient.MongoClient.Database("devsoc").Collection("teams")
+	userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
 
 	var teams []models.AllTeamRequest
 	cur, err := teamCollection.Find(context.TODO(), bson.M{})
@@ -138,20 +139,41 @@ func (databaseClient Database) GetTeams(ctx *fiber.Ctx) error {
 		// To decode into a struct, use cursor.Decode()
 
 		var team models.AllTeamRequest
-		err := cur.Decode(&team)
 		var teamMembers []models.User
+		errr := cur.Decode(&team)
+
 		for i := 0; i < team.TeamSize; i++ {
-			userCollection := databaseClient.MongoClient.Database("devsoc").Collection("users")
-			filter := bson.M{"_id": team.TeamMembers[i]}
+
 			var member models.User
+
+			filter := bson.M{"_id": team.TeamMembers[i]}
 			err = userCollection.FindOne(context.TODO(), filter).Decode(&member)
+
 			if err != nil {
-				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
+				member = models.User{
+					FirstName:   nil,
+					LastName:    nil,
+					Email:       nil,
+					Password:    nil,
+					PhoneNumber: nil,
+					Token:       nil,
+					Bio:         nil,
+					Gender:      nil,
+					UserRole:    "HACKER",
+					// Set other fields to their default or blank values
+					IsActive:    false,
+					IsVerify:    false,
+					IsCanShare:  false,
+					IsCheckedIn: false,
+					InTeam:      false,
+					IsBoard:     false,
+				}
 			}
+
 			teamMembers = append(teamMembers, member)
 		}
 		team.TeamMemberDetails = teamMembers
-		if err != nil {
+		if errr != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
 		}
 

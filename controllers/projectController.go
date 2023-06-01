@@ -399,7 +399,7 @@ func (databaseClient Database) LikeProject(ctx *fiber.Ctx) error {
 
 	findProject := models.Project{}
 	findTeam := models.Team{}
-	prjId, err := primitive.ObjectIDFromHex(projectId)
+	prjId, _ := primitive.ObjectIDFromHex(projectId)
 
 	projectFilter := bson.M{"_id": prjId}
 
@@ -444,4 +444,62 @@ func (databaseClient Database) LikeProject(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "message": "+1 liked", "doc": projectRes})
+}
+
+func (databaseClient Database) CreateComment(ctx *fiber.Ctx) error {
+	var payload models.CreateProjectComment
+	if err := ctx.BodyParser(&payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "message": err.Error()})
+	}
+
+	errors := utils.ValidateStruct(payload)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+	commentsCollection := databaseClient.MongoClient.Database("devsoc").Collection("comments")
+
+	// Check for unique email
+	filter := bson.M{"projectid": payload.ProjectId}
+	count, _ := commentsCollection.CountDocuments(context.TODO(), filter)
+	if count > 0 {
+		fmt.Println("Comment Found")
+		update := bson.M{"$set": bson.M{
+			"comment": payload.Comment,
+		}}
+		_, errr := commentsCollection.UpdateOne(context.Background(), filter, update)
+		if errr != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"err": errr.Error(), "status": "false"})
+		}
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "comment": "Comment Updated"})
+
+	}
+
+	newProjectComment := models.ProjectComment{
+		Id:        primitive.NewObjectID(),
+		ProjectId: payload.ProjectId,
+		Comment:   payload.Comment,
+	}
+
+	result, err := commentsCollection.InsertOne(context.TODO(), newProjectComment)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": err.Error()})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "comment": result})
+
+}
+
+func (databaseClient Database) GetComment(ctx *fiber.Ctx) error {
+
+	commentsCollection := databaseClient.MongoClient.Database("devsoc").Collection("comments")
+
+	findComment := models.ProjectComment{}
+	filter := bson.M{"projectid": ctx.Params("projectid")}
+
+	err := commentsCollection.FindOne(context.TODO(), filter).Decode(&findComment)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "false", "err": "Comment not found"})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "true", "comment": findComment})
 }
