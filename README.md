@@ -4,7 +4,7 @@
 # DEVSOC'23 Portal Backend
 
 > <Subtitle>
-> The offical portal backend for DEVSOC'23
+> The official portal backend for DEVSOC'23
 
 <!--
 
@@ -23,13 +23,12 @@
 - [DEVSOC Backend Repo](https://github.com/CodeChefVIT/devsoc23-backend)
 
 ## Instructions to run
-
+Locally
 ```
 $ git clone https://github.com/CodeChefVIT/devsoc23-portal.git
 $ cd devsoc23-portal
-$ docker compose up
 $ go mod tidy
-$ go run main.go
+$ docker compose up --build
 >> Refer .env.example for environment variables
 ```
 
