@@ -1,71 +1,93 @@
-<p align="center"><a href="https://www.codechefvit.com" target="_blank"><img src="https://i.ibb.co/4J9LXxS/cclogo.png" width=160 title="CodeChef-VIT" alt="Codechef-VIT"></a>
+<p align="center"><a href="https://www.codechefvit.com" target="_blank"><img src="https://s3.amazonaws.com/codechef_shared/sites/all/themes/abessive/logo-3.png" title="CodeChef-VIT" alt="Codechef-VIT"></a>
 </p>
 
-<h2 align="center"> Project Title </h2>
-<br/>
+# DEVSOC'23 Portal Backend
 
-> Include project description here.
+> <Subtitle>
+> The offical portal backend for DEVSOC'23
 
----
+<!--
 
-[![DOCS](https://img.shields.io/badge/Documentation-see%20docs-green?style=flat-square&logo=appveyor)](INSERT_LINK_FOR_DOCS_HERE) 
-  [![UI ](https://img.shields.io/badge/User%20Interface-Link%20to%20UI-orange?style=flat-square&logo=appveyor)](INSERT_UI_LINK_HERE)
-[![GitHub Super-Linter](https://github.com/<OWNER>/<REPOSITORY>/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![DOCS](https://img.shields.io/badge/Documentation-see%20docs-green?style=flat-square&logo=appveyor)](INSERT_LINK_FOR_DOCS_HERE)
+[![UI ](https://img.shields.io/badge/User%20Interface-Link%20to%20UI-orange?style=flat-square&logo=appveyor)](INSERT_UI_LINK_HERE) -->
+
 ## Features
-- Insert list of features here
 
-## Screenshots
-<p align="center">
-<img src="https://i.ibb.co/VppxmWZ/cet.png" alt="Common-Entry-Test" width="400px"/>
-</p>
+- Scalable for large userbase.
+- Fast with low latency.
+- Easy to use.
 
+## Important Links
 
-## Dependencies
- - < dependency >
- - < dependency >
-## Instructions
+- [User API in Postman](https://app.getpostman.com/run-collection/25668967-8f4cae4f-44e2-43e9-9146-9a7609d9ff9c?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D25668967-8f4cae4f-44e2-43e9-9146-9a7609d9ff9c%26entityType%3Dcollection%26workspaceId%3D6a647210-122a-4aa5-afc1-44a9b0e6afe8)
+- [DEVSOC Backend Repo](https://github.com/CodeChefVIT/devsoc23-backend)
 
-#### Directions to Install
-```sh
-$ git clone https://github.com/CodeChefVIT/<Project>
-$ cd <Project>
-$ npm install
+## Instructions to run
+
 ```
-#### Directions to Run
-```sh
-$ npm serve
+$ git clone https://github.com/CodeChefVIT/devsoc23-portal.git
+$ cd devsoc23-portal
+$ docker compose up
+$ go mod tidy
+$ go run main.go
+>> Refer .env.example for environment variables
 ```
+
 ## Contributors
+
 <table>
-	<tr align="center" style="font-weight:bold">
-		<td>
-		John Doe
-		<p align="center">
-			<img src = "https://i.ibb.co/4J9LXxS/cclogo.png" width="150" height="150" alt="Your Name Here (Insert Your Image Link In Src">
-		</p>
-			<p align="center">
-				<a href = "https://github.com/<GitHub-username>">
-					<img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/>
-				</a>
-			</p>
-		</td>
-				<td>
-		John Doe
-		<p align="center">
-			<img src = "https://i.ibb.co/4J9LXxS/cclogo.png" width="150" height="150" alt="Your Name Here (Insert Your Image Link In Src">
-		</p>
-			<p align="center">
-				<a href = "https://github.com/<GitHub-username>">
-					<img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/>
-				</a>
-			</p>
-		</td>
-	</tr>
+<tr align="center">
+<td>Shivam Sharma 
+	<p align="center">
+		<img src = "https://avatars.githubusercontent.com/Mr-Emerald-Wolf " width="150" height="150" alt="Shivam">
+	</p>
+	<p align="center">
+		<a href = "https://github.com/Mr-Emerald-Wolf"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/></a>
+		<a href = "https://www.linkedin.com/in/shivam-sharma-6a0b1b1a7/">
+			<img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36" alt="LinkedIn"/>
+		</a>
+	</p>
+</td>
+<td>Akarsh Shukla 
+	<p align="center">
+		<img src = "https://avatars.githubusercontent.com/akarsh1263 " width="150" height="150" alt="Akarsh">
+	</p>
+	<p align="center">
+		<a href = "https://github.com/akarsh1263 "><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/></a>
+		<a href = "https://www.linkedin.com/in/akarsh-shukla-627447219/">
+			<img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36" alt="LinkedIn"/>
+		</a>
+	</p>
+</td>
+<td>Jatin Manoj
+	<p align="center">
+		<img src = "https://avatars.githubusercontent.com/jatin020403" width="150" height="150" alt="Jatin">
+	</p>
+	<p align="center">
+		<a href = "https://github.com/Jatin020403"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/></a>
+		<a href = "https://www.linkedin.com/in/jatin-manoj-b0902783/">
+			<img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36" alt="LinkedIn"/>
+		</a>
+	</p>
+</td>	
+<td> Sugam Kuber
+	<p align="center">
+		<img src = "https://avatars.githubusercontent.com/SugamKuber" width="150" height="150" alt="Sugam Kuber">
+	</p>
+	<p align="center">
+		<a href = "https://github.com/SugamKuber"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/></a>
+		<a href = "https://www.linkedin.com/in/sugamkuber-78426/">
+			<img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36" alt="LinkedIn"/>
+		</a>
+	</p>
+</td>
+</tr>
 </table>
 
 ## License
+
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
 
 <p align="center">
-	Made with :heart: by <a href="https://www.codechefvit.com" target="_blank">CodeChef-VIT</a>
+	With :heart: by <a href="https://www.codechefvit.com" target="_blank">CodeChef-VIT</a>
 </p>
